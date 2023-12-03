@@ -17,16 +17,14 @@ public:
   Bus();
   ~Bus();
 
-public:
   // CPU 6502
   CPU cpu;
   // RAM
   std::array<uint8_t, 0xFFFF> ram{};
 
-public:
   // Read & write from & to the bus
   void write(uint16_t addr, uint8_t data);
-  uint8_t read(uint16_t addr);
+  uint8_t read(uint16_t addr) const;
 };
 } // namespace EM
 

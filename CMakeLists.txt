@@ -7,4 +7,5 @@ add_executable(MyNesEmulator main.cpp
         CPU.h
         Bus.cpp
         Bus.h
-        CPU.cpp)
+        CPU.cpp
+)
