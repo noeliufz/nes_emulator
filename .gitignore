@@ -1,2 +1,7 @@
 /.idea/
 /cmake-build-debug/
+./Makefile
+./MyNesEmulator
+./cmake-build-debug/*
+./CMakeFiles/*
+./.DS_Store

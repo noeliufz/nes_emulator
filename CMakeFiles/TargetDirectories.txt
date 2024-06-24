@@ -1,0 +1,3 @@
+/Users/noahliucn/MyNesEmulator/CMakeFiles/MyNesEmulator.dir
+/Users/noahliucn/MyNesEmulator/CMakeFiles/edit_cache.dir
+/Users/noahliucn/MyNesEmulator/CMakeFiles/rebuild_cache.dir
