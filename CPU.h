@@ -78,9 +78,11 @@ public:
 
     // Registers
     Registers registers;
+
     // Opcode map
     std::unordered_map<uint8_t, const OpCode *> *opcode_map;
     std::vector<const OpCode *> *opcodes = nullptr;
+
     // Linkage with bus
     EM::Bus *bus = nullptr;
 
@@ -88,18 +90,24 @@ public:
     void connect_bus(Bus *b) { bus = b; }
 
     // Read & write from & to the bus
-    uint8_t read(uint16_t addr) const;
-    void write(uint16_t addr, uint8_t data) const;
-    uint16_t read_u16(uint16_t addr) const;
-    void write_u16(uint16_t addr, uint8_t data) const; // todo
+    uint8_t read(uint16_t addr);
+    void write(uint16_t addr, uint8_t data);
+    uint16_t read_u16(uint16_t addr);
+    void write_u16(uint16_t addr, uint16_t data);
+
+    // Load and reset functions
+    void reset();
+    void load(std::vector<uint8_t> program);
+    void load_and_run(std::vector<uint8_t> program);
+    void run(); // todo
 
     void init_opcodes();
     void init_opcode_map();
-    const OpCode *get_opcode(uint8_t code) const;
+    const OpCode *get_opcode(uint8_t code);
 
 private:
     // Get and update flag
-    bool get_flag(CpuFlags f) const;
+    bool get_flag(CpuFlags f);
     void set_flag(CpuFlags f, bool v);
 };
 } // namespace EM
