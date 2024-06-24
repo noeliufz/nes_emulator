@@ -105,10 +105,22 @@ public:
     void init_opcode_map();
     const OpCode *get_opcode(uint8_t code);
 
+    void interpret(std::vector<uint8_t> program);
+
 private:
     // Get and update flag
     bool get_flag(CpuFlags f);
     void set_flag(CpuFlags f, bool v);
+    void update_zero_and_negative_flags(uint8_t result);
+
+private:
+    uint16_t get_operand_address(AddressingMode mode);
+    void set_register_a(uint8_t value);
+    /*** Instructions ***/
+    void LDA(AddressingMode mode);
+    void TAX();
+    void INX();
+    void STA(AddressingMode mode);
 };
 } // namespace EM
 

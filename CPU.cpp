@@ -3,11 +3,15 @@
 //
 #include "CPU.h"
 
+#include <cstddef>
 #include <iostream>
 
 #include "Bus.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>
+#include <sstream>
+#include <stdexcept>
+#include <vector>
 
 namespace EM {
 ///////////////////////////////////////////////////////////////////////////////
@@ -15,10 +19,16 @@ namespace EM {
 CPU::CPU() {
     init_opcodes();
     init_opcode_map();
+    registers.a = 0;
+    registers.p = 0;  // status
+    registers.pc = 0; // program counter
 };
+
 CPU::~CPU() {
     delete opcodes;
     delete opcode_map;
+    opcodes = nullptr;
+    opcode_map = nullptr;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -49,13 +59,22 @@ void CPU::reset() {
     registers.p = 0; // status
 
     registers.pc = 0; // program counter
+
+    registers.pc = read_u16(0xFFFC);
 }
 
 void CPU::load(std::vector<uint8_t> program) {
     // copy program data to memory
-    std::memcpy(&(bus->ram), program.data(), program.size());
+    std::memcpy((bus->ram).data() + 0x8000, program.data(), program.size());
+    // std::copy(program.begin(), program.end(), (bus->ram).begin() + 0x8000);
     // set 0x8000 at address 0xFFFC
     write_u16(0xFFFC, 0x8000);
+
+    // Verify the copy
+    for (size_t i = 0; i < program.size(); ++i) {
+        std::cout << std::hex << static_cast<int>(bus->ram[i + 0x8000]) << " "
+                  << std::endl;
+    }
 }
 
 void CPU::load_and_run(std::vector<uint8_t> program) {
@@ -64,7 +83,73 @@ void CPU::load_and_run(std::vector<uint8_t> program) {
     run();
 }
 
-void CPU::run() {}
+void CPU::run() {
+    while (true) {
+        // auto code = read(registers.pc);
+        auto code = bus->ram[registers.pc];
+        std::cout << "code " << std::hex << static_cast<int>(code) << std::endl;
+        std::cout << "pc " << registers.pc << std::endl;
+        ++registers.pc;
+        auto state = registers.pc;
+
+        const EM::OpCode *op = nullptr;
+        try {
+            auto it = opcode_map->find(code);
+            if (it != opcode_map->end()) {
+                op = it->second;
+            } else {
+                std::ostringstream oss;
+                oss << "Opcode" << std::hex << code << " is not recognized.";
+                throw std::runtime_error(oss.str());
+            }
+        } catch (const std::runtime_error &e) {
+            std::cerr << e.what() << std::endl;
+        }
+
+        switch (code) {
+        case 0xa9:
+        case 0xa5:
+        case 0xb5:
+        case 0xad:
+        case 0xbd:
+        case 0xb9:
+        case 0xa1:
+        case 0xb1: {
+            LDA(op->mode);
+            break;
+        }
+
+        /*** STA ***/
+        case 0x85:
+        case 0x95:
+        case 0x8d:
+        case 0x9d:
+        case 0x99:
+        case 0x81:
+        case 0x91: {
+            STA(op->mode);
+            break;
+        }
+
+        case 0xaa: {
+            TAX();
+            break;
+        }
+        case 0xe8: {
+            INX();
+            break;
+        }
+        case 0x00: {
+            return;
+        }
+            // todo
+        }
+
+        if (state == registers.pc) {
+            registers.pc += (uint16_t)(op->len - 1);
+        }
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Get and update flags
@@ -72,9 +157,14 @@ bool CPU::get_flag(CpuFlags f) { return (registers.p & f); }
 
 void CPU::set_flag(CpuFlags f, bool v) {
     if (v)
-        registers.p |= f;
+        registers.p |= f; // set status to true
     else
-        registers.p &= ~f;
+        registers.p &= ~f; // clear status
+}
+
+void CPU::update_zero_and_negative_flags(uint8_t result) {
+    set_flag(Z, result == 0);          // update zero flag
+    set_flag(N, result & 0b1000'0000); // update negative flag
 }
 
 void CPU::init_opcodes() {
@@ -647,13 +737,16 @@ void CPU::init_opcodes() {
     opcodes->emplace_back(
         new OpCode(0x93, "*AHX", 2, /* guess */ 8, AddressingMode::Indirect_Y));
     // todo: highly unstable and not used
-    opcodes->emplace_back(new OpCode(0x9f, "*AHX", 3, /* guess */ 4 /* or 5*/,
+    opcodes->emplace_back(new OpCode(0x9f, "*AHX", 3,
+                                     /* guess */ 4 /* or 5*/,
                                      AddressingMode::Absolute_Y));
     // todo: highly unstable and not used
-    opcodes->emplace_back(new OpCode(0x9e, "*SHX", 3, /* guess */ 4 /* or 5*/,
+    opcodes->emplace_back(new OpCode(0x9e, "*SHX", 3,
+                                     /* guess */ 4 /* or 5*/,
                                      AddressingMode::Absolute_Y));
     // todo: highly unstable and not used
-    opcodes->emplace_back(new OpCode(0x9c, "*SHY", 3, /* guess */ 4 /* or 5*/,
+    opcodes->emplace_back(new OpCode(0x9c, "*SHY", 3,
+                                     /* guess */ 4 /* or 5*/,
                                      AddressingMode::Absolute_X));
     // todo: highly unstable and not used
 
@@ -696,4 +789,95 @@ const OpCode *CPU::get_opcode(uint8_t code) {
     return opcode_map->find(code) != opcode_map->end() ? (*opcode_map)[code]
                                                        : nullptr;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Get operand address in different addressing mode
+uint16_t CPU::get_operand_address(AddressingMode mode) {
+    switch (mode) {
+    case Immediate:
+        return registers.pc;
+
+    case ZeroPage:
+        return (uint16_t)read(registers.pc);
+
+    case Absolute:
+        return read_u16(registers.pc);
+
+    case ZeroPage_X: {
+        auto pos = read(registers.pc);
+        // wrappign add
+        auto addr = pos + registers.x;
+        return addr;
+    }
+    case ZeroPage_Y: {
+        auto pos = read(registers.pc);
+        // wrappign add
+        auto addr = pos + (uint16_t)registers.y;
+        return addr;
+    }
+
+    case Absolute_X: {
+        auto base = read_u16(registers.pc);
+        auto addr = base + (uint16_t)registers.x;
+        return addr;
+    }
+    case Absolute_Y: {
+        auto base = read_u16(registers.pc);
+        auto addr = base + (uint16_t)registers.y;
+        return addr;
+    }
+
+    case Indirect_X: {
+        auto base = read(registers.pc);
+        uint8_t ptr = (uint8_t)base + registers.x;
+        auto lo = read((uint16_t)ptr);
+        auto hi = read((uint16_t)(ptr + 1));
+        return ((uint16_t)hi) << 8 | ((uint16_t)lo);
+    }
+    case Indirect_Y: {
+        auto base = read(registers.pc);
+        uint8_t ptr = (uint8_t)base + registers.y;
+        auto lo = read((uint16_t)ptr);
+        auto hi = read((uint16_t)(ptr + 1));
+        return ((uint16_t)hi) << 8 | ((uint16_t)lo);
+    }
+
+    case NoneAddressing: {
+        throw std::runtime_error("Unknown supported");
+    }
+    }
+
+    return 0; // todo
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Instructions
+
+void CPU::set_register_a(uint8_t value) {
+    registers.a = value;
+    update_zero_and_negative_flags(registers.a);
+}
+
+void CPU::LDA(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto value = read(addr);
+    set_register_a(value);
+}
+
+void CPU::TAX() {
+    registers.x = registers.a;
+    update_zero_and_negative_flags(registers.x);
+}
+
+void CPU::INX() {
+    // actually it is wrapping add
+    registers.x = registers.x + 1;
+    update_zero_and_negative_flags(registers.x);
+}
+
+void CPU::STA(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    write(addr, registers.a);
+}
+
 } // namespace EM
