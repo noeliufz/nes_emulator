@@ -24,22 +24,14 @@ struct Registers {
 
 // Flags
 enum CpuFlags {
-    C = (1 << 0),
-    // Carry bit
-    Z = (1 << 1),
-    // Zero
-    I = (1 << 2),
-    // Interrupt disable
-    D = (1 << 3),
-    // Decimal mode (not used in NES emulator)
-    B = (1 << 4),
-    // Break
-    U = (1 << 5),
-    // *Unused*
-    V = (1 << 6),
-    // Overflow
-    N = (1 << 7),
-    // Negative
+    C = (1 << 0), // Carry bit
+    Z = (1 << 1), // Zero
+    I = (1 << 2), // Interrupt disable
+    D = (1 << 3), // Decimal mode (not used in NES emulator)
+    B = (1 << 4), // Break
+    U = (1 << 5), // *Unused* Break 2
+    V = (1 << 6), // Overflow
+    N = (1 << 7), // Negative
 };
 
 // Addressing modes
@@ -113,15 +105,53 @@ private:
     void set_flag(CpuFlags f, bool v);
     void update_zero_and_negative_flags(uint8_t result);
 
+    // set registers and stack
+    void set_register_a(uint8_t value);
+    void add_to_register_a(uint8_t data);
+    uint8_t stack_pop();
+    void stack_push(uint8_t data);
+    uint16_t stack_pop_u16();
+    void stack_push_u16(uint16_t data);
+    void asl_accumulator();
+    void lsr_accumulator();
+    void rol_accumulator();
+    void ror_accumulator();
+
 private:
     uint16_t get_operand_address(AddressingMode mode);
-    void set_register_a(uint8_t value);
     /*** Instructions ***/
+    void LDY(AddressingMode mode);
+    void LDX(AddressingMode mdoe);
     void LDA(AddressingMode mode);
+    void STA(AddressingMode mode);
+    void AND(AddressingMode mode);
+    void EOR(AddressingMode mode);
+    void ORA(AddressingMode mode);
     void TAX();
     void INX();
-    void STA(AddressingMode mode);
+    void INY();
+    void SBC(AddressingMode mode);
+    void ADC(AddressingMode mode);
+    uint8_t ASL(AddressingMode mode);
+    uint8_t LSR(AddressingMode mode);
+    uint8_t ROL(AddressingMode mode);
+    uint8_t ROR(AddressingMode mode);
+    uint8_t INC(AddressingMode mode);
+    void DEX();
+    void DEY();
+    uint8_t DEC(AddressingMode mode);
+    void PLA();
+    void PLP();
+    void PHP();
+    void BIT(AddressingMode mode);
+    void COMPARE(AddressingMode mode, uint8_t compare_with);
+    void BRANCH(bool condition);
+
+private:
+    const uint16_t STACK = 0x0100;
+    const uint16_t STACK_RESET = 0xfd;
 };
+
 } // namespace EM
 
 #endif // MYNESEMULATOR__CPU_H_

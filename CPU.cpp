@@ -4,6 +4,7 @@
 #include "CPU.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <iostream>
 
 #include "Bus.h"
@@ -56,25 +57,16 @@ void CPU::write_u16(uint16_t addr, uint16_t data) {
 void CPU::reset() {
     registers.a = 0;
     registers.x = 0;
-    registers.p = 0; // status
-
+    registers.p = 0;  // status
     registers.pc = 0; // program counter
-
     registers.pc = read_u16(0xFFFC);
 }
 
 void CPU::load(std::vector<uint8_t> program) {
     // copy program data to memory
     std::memcpy((bus->ram).data() + 0x8000, program.data(), program.size());
-    // std::copy(program.begin(), program.end(), (bus->ram).begin() + 0x8000);
     // set 0x8000 at address 0xFFFC
     write_u16(0xFFFC, 0x8000);
-
-    // Verify the copy
-    for (size_t i = 0; i < program.size(); ++i) {
-        std::cout << std::hex << static_cast<int>(bus->ram[i + 0x8000]) << " "
-                  << std::endl;
-    }
 }
 
 void CPU::load_and_run(std::vector<uint8_t> program) {
@@ -119,6 +111,135 @@ void CPU::run() {
             break;
         }
 
+        case 0xaa: {
+            TAX();
+            break;
+        }
+
+        case 0xe8: {
+            INX();
+            break;
+        }
+
+        case 0x00:
+            return;
+
+        /*** CLD ***/
+        case 0xd8: {
+            set_flag(D, false);
+            break;
+        }
+        /*** CLI ***/
+        case 0x58: {
+            set_flag(I, false);
+            break;
+        }
+        /*** CLV ***/
+        case 0xb8: {
+            set_flag(V, false);
+            break;
+        }
+        /*** CLC ***/
+        case 0x18: {
+            set_flag(C, false);
+            break;
+        }
+        /*** SEC ***/
+        case 0x38: {
+            set_flag(C, true);
+            break;
+        }
+        /*** SEI ***/
+        case 0x78: {
+            set_flag(I, true);
+            break;
+        }
+        /*** SED ***/
+        case 0xf8: {
+            set_flag(D, true);
+            break;
+        }
+        /*** PHA ***/
+        case 0x48: {
+            stack_push(registers.a);
+            break;
+        }
+        /*** PLA ***/
+        case 0x68: {
+            PLA();
+            break;
+        }
+        /*** PHP ***/
+        case 0x08: {
+            PHP();
+            break;
+        }
+        /*** PLP ***/
+        case 0x28: {
+            PLP();
+            break;
+        }
+        /*** ADC ***/
+        case 0x69:
+        case 0x65:
+        case 0x75:
+        case 0x6d:
+        case 0x7d:
+        case 0x79:
+        case 0x61:
+        case 0x71: {
+            ADC(op->mode);
+            break;
+        }
+        /*** SBC ***/
+        case 0xe9:
+        case 0xe5:
+        case 0xf5:
+        case 0xed:
+        case 0xfd:
+        case 0xf9:
+        case 0xe1:
+        case 0xf1: {
+            SBC(op->mode);
+            break;
+        }
+        /*** AND ***/
+        case 0x29:
+        case 0x25:
+        case 0x35:
+        case 0x2d:
+        case 0x3d:
+        case 0x39:
+        case 0x21:
+        case 0x31: {
+            AND(op->mode);
+            break;
+        }
+            /* EOR */
+        case 0x49:
+        case 0x45:
+        case 0x55:
+        case 0x4d:
+        case 0x5d:
+        case 0x59:
+        case 0x41:
+        case 0x51: {
+            EOR(op->mode);
+            break;
+        }
+        /* ORA */
+        case 0x09:
+        case 0x05:
+        case 0x15:
+        case 0x0d:
+        case 0x1d:
+        case 0x19:
+        case 0x01:
+        case 0x11: {
+            ORA(op->mode);
+            break;
+        }
+
         /*** STA ***/
         case 0x85:
         case 0x95:
@@ -131,17 +252,6 @@ void CPU::run() {
             break;
         }
 
-        case 0xaa: {
-            TAX();
-            break;
-        }
-        case 0xe8: {
-            INX();
-            break;
-        }
-        case 0x00: {
-            return;
-        }
             // todo
         }
 
@@ -858,10 +968,79 @@ void CPU::set_register_a(uint8_t value) {
     update_zero_and_negative_flags(registers.a);
 }
 
+void CPU::add_to_register_a(uint8_t data) {
+    uint16_t sum =
+        (uint16_t)registers.a + (uint16_t)data + get_flag(C) == true ? 1 : 0;
+
+    // set carry flag
+    set_flag(C, sum > 0xff);
+
+    uint8_t result = (uint8_t)sum;
+
+    // set overflow flag
+    set_flag(V, (data ^ result) & (result ^ registers.a) & 0x80 != 0);
+
+    set_register_a(result);
+}
+
+uint8_t CPU::stack_pop() {
+    ++registers.sp;
+    return read(STACK + (uint16_t)registers.sp);
+}
+void CPU::stack_push(uint8_t data) {
+    write(STACK + (uint16_t)registers.sp, data);
+    --registers.sp;
+}
+uint16_t CPU::stack_pop_u16() {
+    uint16_t lo = stack_pop();
+    uint16_t hi = stack_pop();
+    return hi << 8 | lo;
+}
+void CPU::stack_push_u16(uint16_t data) {
+    uint8_t hi = data >> 8;
+    uint8_t lo = data & 0xff;
+    stack_push(hi);
+    stack_push(lo);
+}
+
+void CPU::LDY(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    registers.y = data;
+    update_zero_and_negative_flags(registers.y);
+}
+void CPU::LDX(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    registers.x = data;
+    update_zero_and_negative_flags(registers.x);
+}
+
 void CPU::LDA(AddressingMode mode) {
     auto addr = get_operand_address(mode);
     auto value = read(addr);
     set_register_a(value);
+}
+
+void CPU::STA(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    write(addr, registers.a);
+}
+
+void CPU::AND(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    set_register_a(data & registers.a);
+}
+void CPU::EOR(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    set_register_a(data ^ registers.a);
+}
+void CPU::ORA(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    set_register_a(data | registers.a);
 }
 
 void CPU::TAX() {
@@ -874,10 +1053,192 @@ void CPU::INX() {
     registers.x = registers.x + 1;
     update_zero_and_negative_flags(registers.x);
 }
-
-void CPU::STA(AddressingMode mode) {
-    auto addr = get_operand_address(mode);
-    write(addr, registers.a);
+void CPU::INY() {
+    registers.y = registers.y + 1;
+    update_zero_and_negative_flags(registers.y);
 }
 
+void CPU::SBC(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    // change data to int8_t,  take (-data-1) and cast back to uint8_t
+    uint8_t result = static_cast<uint8_t>(-static_cast<int8_t>(data) - 1);
+    add_to_register_a(result);
+}
+
+void CPU::asl_accumulator() {
+    auto data = registers.a;
+    // set carry flag
+    set_flag(C, data >> 7 == 1);
+    data <<= 1;
+    set_register_a(data);
+}
+uint8_t CPU::ASL(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+
+    set_flag(C, data >> 7 == 1);
+    data <<= 1;
+    write(addr, data);
+    update_zero_and_negative_flags(data);
+    return data;
+}
+
+void CPU::lsr_accumulator() {
+    auto data = registers.a;
+    set_flag(C, (data & 1) == 1);
+    data >>= 1;
+    set_register_a(data);
+}
+uint8_t CPU::LSR(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+
+    set_flag(C, (data & 1) == 1);
+
+    data >>= 1;
+    write(addr, data);
+    update_zero_and_negative_flags(data);
+    return data;
+}
+
+uint8_t CPU::ROL(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    bool old_carry = get_flag(C);
+
+    set_flag(C, data >> 7 == 1);
+
+    data <<= 1;
+
+    if (old_carry) {
+        data |= 1;
+    }
+
+    write(addr, data);
+    update_zero_and_negative_flags(data);
+
+    return data;
+}
+void CPU::rol_accumulator() {
+    auto data = registers.a;
+    bool old_carry = get_flag(C);
+
+    set_flag(C, data >> 7 == 1);
+
+    data <<= 1;
+
+    if (old_carry) {
+        data |= 1;
+    }
+
+    set_register_a(data);
+}
+
+uint8_t CPU::ROR(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    bool old_carry = get_flag(C);
+
+    set_flag(C, (data & 1) == 1);
+
+    data >>= 1;
+
+    if (old_carry) {
+        data |= 0b1000'0000;
+    }
+
+    write(addr, data);
+    update_zero_and_negative_flags(data);
+
+    return data;
+}
+void CPU::ror_accumulator() {
+    auto data = registers.a;
+    bool old_carry = get_flag(C);
+
+    set_flag(C, (data & 1) == 1);
+
+    data >>= 1;
+
+    if (old_carry) {
+        data |= 0b1000'0000;
+    }
+
+    set_register_a(data);
+}
+
+uint8_t CPU::INC(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    ++data;
+    write(addr, data);
+    update_zero_and_negative_flags(data);
+    return data;
+}
+
+void CPU::DEX() {
+    --registers.x;
+    update_zero_and_negative_flags(registers.x);
+}
+void CPU::DEY() {
+    --registers.y;
+    update_zero_and_negative_flags(registers.y);
+}
+uint8_t CPU::DEC(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    --data;
+    write(addr, data);
+    update_zero_and_negative_flags(data);
+    return data;
+}
+
+void CPU::PLA() {
+    auto data = stack_pop();
+    set_register_a(data);
+}
+void CPU::PLP() {
+    registers.p = stack_pop();
+    // Clear BREAK flag
+    set_flag(B, false);
+    // Set BREAK2 flag
+    set_flag(U, true);
+}
+void CPU::PHP() {
+    // Save previous status
+    auto flags = registers.p;
+    // Set BREAK
+    set_flag(B, true);
+    // Set BREAK2
+    set_flag(U, true);
+    stack_push(registers.p);
+
+    // Copy back
+    registers.p = flags;
+}
+
+void CPU::BIT(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    auto and_result = registers.a & data;
+    set_flag(Z, and_result == 0);
+    set_flag(N, (data & 0b1000'0000) > 0);
+    set_flag(V, (data & 0b0100'1000) > 0);
+}
+
+void CPU::COMPARE(AddressingMode mode, uint8_t compare_with) {
+    auto addr = get_operand_address(mode);
+    auto data = read(addr);
+    set_flag(C, data <= compare_with);
+    update_zero_and_negative_flags(compare_with - data);
+}
+
+void CPU::BRANCH(bool condition) {
+    if (condition) {
+        int8_t jump = (int8_t)read(registers.pc);
+        auto jump_addr = registers.pc + 1 + (uint16_t)jump;
+        registers.pc = jump_addr;
+    }
+}
 } // namespace EM

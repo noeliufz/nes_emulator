@@ -117,6 +117,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named CPU_Test
+
+# Build rule for target.
+CPU_Test: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CPU_Test
+.PHONY : CPU_Test
+
+# fast build rule for target.
+CPU_Test/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/build
+.PHONY : CPU_Test/fast
+
+#=============================================================================
 # Target rules for targets named MyNesEmulator
 
 # Build rule for target.
@@ -134,6 +147,7 @@ Bus.o: Bus.cpp.o
 
 # target to build an object file
 Bus.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/Bus.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyNesEmulator.dir/build.make CMakeFiles/MyNesEmulator.dir/Bus.cpp.o
 .PHONY : Bus.cpp.o
 
@@ -142,6 +156,7 @@ Bus.i: Bus.cpp.i
 
 # target to preprocess a source file
 Bus.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/Bus.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyNesEmulator.dir/build.make CMakeFiles/MyNesEmulator.dir/Bus.cpp.i
 .PHONY : Bus.cpp.i
 
@@ -150,6 +165,7 @@ Bus.s: Bus.cpp.s
 
 # target to generate assembly for a file
 Bus.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/Bus.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyNesEmulator.dir/build.make CMakeFiles/MyNesEmulator.dir/Bus.cpp.s
 .PHONY : Bus.cpp.s
 
@@ -158,6 +174,7 @@ CPU.o: CPU.cpp.o
 
 # target to build an object file
 CPU.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/CPU.cpp.o
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyNesEmulator.dir/build.make CMakeFiles/MyNesEmulator.dir/CPU.cpp.o
 .PHONY : CPU.cpp.o
 
@@ -166,6 +183,7 @@ CPU.i: CPU.cpp.i
 
 # target to preprocess a source file
 CPU.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/CPU.cpp.i
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyNesEmulator.dir/build.make CMakeFiles/MyNesEmulator.dir/CPU.cpp.i
 .PHONY : CPU.cpp.i
 
@@ -174,8 +192,33 @@ CPU.s: CPU.cpp.s
 
 # target to generate assembly for a file
 CPU.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/CPU.cpp.s
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyNesEmulator.dir/build.make CMakeFiles/MyNesEmulator.dir/CPU.cpp.s
 .PHONY : CPU.cpp.s
+
+cpu_test.o: cpu_test.cpp.o
+.PHONY : cpu_test.o
+
+# target to build an object file
+cpu_test.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/cpu_test.cpp.o
+.PHONY : cpu_test.cpp.o
+
+cpu_test.i: cpu_test.cpp.i
+.PHONY : cpu_test.i
+
+# target to preprocess a source file
+cpu_test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/cpu_test.cpp.i
+.PHONY : cpu_test.cpp.i
+
+cpu_test.s: cpu_test.cpp.s
+.PHONY : cpu_test.s
+
+# target to generate assembly for a file
+cpu_test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/cpu_test.cpp.s
+.PHONY : cpu_test.cpp.s
 
 main.o: main.cpp.o
 .PHONY : main.o
@@ -209,6 +252,7 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... CPU_Test"
 	@echo "... MyNesEmulator"
 	@echo "... Bus.o"
 	@echo "... Bus.i"
@@ -216,6 +260,9 @@ help:
 	@echo "... CPU.o"
 	@echo "... CPU.i"
 	@echo "... CPU.s"
+	@echo "... cpu_test.o"
+	@echo "... cpu_test.i"
+	@echo "... cpu_test.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

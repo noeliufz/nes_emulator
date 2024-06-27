@@ -3,6 +3,12 @@ project(MyNesEmulator)
 
 set(CMAKE_CXX_STANDARD 17)
 
+add_executable(CPU_Test cpu_test.cpp
+        CPU.h
+        Bus.cpp
+        Bus.h
+        CPU.cpp
+)
 add_executable(MyNesEmulator main.cpp
         CPU.h
         Bus.cpp

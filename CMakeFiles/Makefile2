@@ -63,6 +63,7 @@ CMAKE_BINARY_DIR = /Users/noahliucn/MyNesEmulator
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
+all: CMakeFiles/CPU_Test.dir/all
 all: CMakeFiles/MyNesEmulator.dir/all
 .PHONY : all
 
@@ -71,8 +72,35 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
+clean: CMakeFiles/CPU_Test.dir/clean
 clean: CMakeFiles/MyNesEmulator.dir/clean
 .PHONY : clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/CPU_Test.dir
+
+# All Build rule for target.
+CMakeFiles/CPU_Test.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/noahliucn/MyNesEmulator/CMakeFiles --progress-num=1,2,3,4 "Built target CPU_Test"
+.PHONY : CMakeFiles/CPU_Test.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/CPU_Test.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/noahliucn/MyNesEmulator/CMakeFiles 4
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/CPU_Test.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/noahliucn/MyNesEmulator/CMakeFiles 0
+.PHONY : CMakeFiles/CPU_Test.dir/rule
+
+# Convenience name for target.
+CPU_Test: CMakeFiles/CPU_Test.dir/rule
+.PHONY : CPU_Test
+
+# clean rule for target.
+CMakeFiles/CPU_Test.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/CPU_Test.dir/build.make CMakeFiles/CPU_Test.dir/clean
+.PHONY : CMakeFiles/CPU_Test.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/MyNesEmulator.dir
@@ -81,7 +109,7 @@ clean: CMakeFiles/MyNesEmulator.dir/clean
 CMakeFiles/MyNesEmulator.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyNesEmulator.dir/build.make CMakeFiles/MyNesEmulator.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/MyNesEmulator.dir/build.make CMakeFiles/MyNesEmulator.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/noahliucn/MyNesEmulator/CMakeFiles --progress-num=1,2,3,4 "Built target MyNesEmulator"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/noahliucn/MyNesEmulator/CMakeFiles --progress-num=5,6,7,8 "Built target MyNesEmulator"
 .PHONY : CMakeFiles/MyNesEmulator.dir/all
 
 # Build rule for subdir invocation for target.
