@@ -3,6 +3,7 @@
 //
 
 #include "Bus.h"
+#include <iostream>
 
 namespace EM {
 Bus::Bus() {
@@ -20,7 +21,7 @@ Bus::~Bus() = default;
 void Bus::write(uint16_t addr, uint8_t data) {
     // ensure the address range not out of bound
     if (addr < 0x00 || addr > 0xFFFF) {
-        fprintf(stderr, "Write data out of range of RAM\n");
+        std::cerr << "Write data out of range of RAM" << std::endl;
         exit(1);
     }
 
@@ -31,7 +32,7 @@ void Bus::write(uint16_t addr, uint8_t data) {
 uint8_t Bus::read(uint16_t addr) {
     // ensure the address range not out of bound
     if (addr < 0x00 || addr > 0xFFFF) {
-        fprintf(stderr, "Read data out of range of RAM\n");
+        std::cerr << "Read data out of range of RAM" << std::endl;
         exit(1);
     }
 

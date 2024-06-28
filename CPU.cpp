@@ -57,16 +57,16 @@ void CPU::write_u16(uint16_t addr, uint16_t data) {
 void CPU::reset() {
     registers.a = 0;
     registers.x = 0;
-    registers.p = 0;  // status
-    registers.pc = 0; // program counter
+    registers.sp = STACK_RESET;
+    registers.p = 0b100100; // status
     registers.pc = read_u16(0xFFFC);
 }
 
 void CPU::load(std::vector<uint8_t> program) {
     // copy program data to memory
-    std::memcpy((bus->ram).data() + 0x8000, program.data(), program.size());
+    std::memcpy((bus->ram).data() + 0x6000, program.data(), program.size());
     // set 0x8000 at address 0xFFFC
-    write_u16(0xFFFC, 0x8000);
+    write_u16(0xFFFC, 0x6000);
 }
 
 void CPU::load_and_run(std::vector<uint8_t> program) {
@@ -79,8 +79,8 @@ void CPU::run() {
     while (true) {
         // auto code = read(registers.pc);
         auto code = bus->ram[registers.pc];
-        std::cout << "code " << std::hex << static_cast<int>(code) << std::endl;
-        std::cout << "pc " << registers.pc << std::endl;
+        std::cout << "pc " << registers.pc << " code " << std::hex
+                  << static_cast<int>(code) << std::endl;
         ++registers.pc;
         auto state = registers.pc;
 
@@ -91,7 +91,9 @@ void CPU::run() {
                 op = it->second;
             } else {
                 std::ostringstream oss;
-                oss << "Opcode" << std::hex << code << " is not recognized.";
+                oss << "Opcode " << std::hex << static_cast<int>(code)
+                    << " is not recognized. ";
+                oss << "Program counter: " << std::hex << registers.pc;
                 throw std::runtime_error(oss.str());
             }
         } catch (const std::runtime_error &e) {
@@ -122,7 +124,7 @@ void CPU::run() {
         }
 
         case 0x00:
-            return;
+            return; // todo
 
         /*** CLD ***/
         case 0xd8: {
@@ -249,6 +251,80 @@ void CPU::run() {
         case 0x81:
         case 0x91: {
             STA(op->mode);
+            break;
+        }
+
+        /* STX */
+        case 0x86:
+        case 0x96:
+        case 0x8e: {
+            auto addr = get_operand_address(op->mode);
+            write(addr, registers.x);
+            break;
+        }
+        /* STY */
+        case 0x84:
+        case 0x94:
+        case 0x8c: {
+            auto addr = get_operand_address(op->mode);
+            write(addr, registers.y);
+            break;
+        }
+
+        /* LDX */
+        case 0xa2:
+        case 0xa6:
+        case 0xb6:
+        case 0xae:
+        case 0xbe: {
+            LDX(op->mode);
+            break;
+        }
+        /* LDY */
+        case 0xa0:
+        case 0xa4:
+        case 0xb4:
+        case 0xac:
+        case 0xbc: {
+            LDY(op->mode);
+            break;
+        }
+
+        /* NOP */
+        case 0xea: {
+            break;
+        }
+
+        /* TAY */
+        case 0xa8: {
+            registers.y = registers.a;
+            update_zero_and_negative_flags(registers.y);
+            break;
+        }
+
+        /* TSX */
+        case 0xba: {
+            registers.x = registers.sp;
+            update_zero_and_negative_flags(registers.x);
+            break;
+        }
+
+        /* TXA */
+        case 0x8a: {
+            registers.a = registers.x;
+            update_zero_and_negative_flags(registers.a);
+            break;
+        }
+        /* TXS */
+        case 0x9a: {
+            registers.sp = registers.x;
+            break;
+        }
+
+        /* TYA */
+        case 0x98: {
+            registers.a = registers.y;
+            update_zero_and_negative_flags(registers.a);
             break;
         }
 
@@ -1064,6 +1140,12 @@ void CPU::SBC(AddressingMode mode) {
     // change data to int8_t,  take (-data-1) and cast back to uint8_t
     uint8_t result = static_cast<uint8_t>(-static_cast<int8_t>(data) - 1);
     add_to_register_a(result);
+}
+
+void CPU::ADC(AddressingMode mode) {
+    auto addr = get_operand_address(mode);
+    auto value = read(addr);
+    add_to_register_a(value);
 }
 
 void CPU::asl_accumulator() {

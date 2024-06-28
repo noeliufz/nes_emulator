@@ -72,7 +72,7 @@ public:
     Registers registers;
 
     // Opcode map
-    std::unordered_map<uint8_t, const OpCode *> *opcode_map;
+    std::unordered_map<uint8_t, const OpCode *> *opcode_map = nullptr;
     std::vector<const OpCode *> *opcodes = nullptr;
 
     // Linkage with bus
@@ -91,7 +91,7 @@ public:
     void reset();
     void load(std::vector<uint8_t> program);
     void load_and_run(std::vector<uint8_t> program);
-    void run(); // todo
+    void run();
 
     void init_opcodes();
     void init_opcode_map();
