@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -82,9 +83,9 @@ public:
     void connect_bus(Bus *b) { bus = b; }
 
     // Read & write from & to the bus
-    uint8_t read(uint16_t addr);
+    uint8_t read(uint16_t addr) const;
     void write(uint16_t addr, uint8_t data);
-    uint16_t read_u16(uint16_t addr);
+    uint16_t read_u16(uint16_t addr) const;
     void write_u16(uint16_t addr, uint16_t data);
 
     // Load and reset functions
@@ -92,6 +93,7 @@ public:
     void load(std::vector<uint8_t> program);
     void load_and_run(std::vector<uint8_t> program);
     void run();
+    void run_with_callback(std::function<void(CPU &)> callback);
 
     void init_opcodes();
     void init_opcode_map();
@@ -103,10 +105,11 @@ private:
     // Get and update flag
     bool get_flag(CpuFlags f);
     void set_flag(CpuFlags f, bool v);
-    void update_zero_and_negative_flags(uint8_t result);
+    void update_zero_and_negative_flags(const uint8_t result);
+    void update_negative_flags(const uint8_t result);
 
     // set registers and stack
-    void set_register_a(uint8_t value);
+    void set_register_a(const uint8_t &value);
     void add_to_register_a(uint8_t data);
     uint8_t stack_pop();
     void stack_push(uint8_t data);
@@ -118,33 +121,33 @@ private:
     void ror_accumulator();
 
 private:
-    uint16_t get_operand_address(AddressingMode mode);
+    uint16_t get_operand_address(const AddressingMode &mode);
     /*** Instructions ***/
-    void LDY(AddressingMode mode);
-    void LDX(AddressingMode mdoe);
-    void LDA(AddressingMode mode);
-    void STA(AddressingMode mode);
-    void AND(AddressingMode mode);
-    void EOR(AddressingMode mode);
-    void ORA(AddressingMode mode);
+    void LDY(const AddressingMode &mode);
+    void LDX(const AddressingMode &mode);
+    void LDA(const AddressingMode &mode);
+    void STA(const AddressingMode &mode);
+    void AND(const AddressingMode &mode);
+    void EOR(const AddressingMode &mode);
+    void ORA(const AddressingMode &mode);
     void TAX();
     void INX();
     void INY();
-    void SBC(AddressingMode mode);
-    void ADC(AddressingMode mode);
-    uint8_t ASL(AddressingMode mode);
-    uint8_t LSR(AddressingMode mode);
-    uint8_t ROL(AddressingMode mode);
-    uint8_t ROR(AddressingMode mode);
-    uint8_t INC(AddressingMode mode);
+    void SBC(const AddressingMode &mode);
+    void ADC(const AddressingMode &mode);
+    uint8_t ASL(const AddressingMode &mode);
+    uint8_t LSR(const AddressingMode &mode);
+    uint8_t ROL(const AddressingMode &mode);
+    uint8_t ROR(const AddressingMode &mode);
+    uint8_t INC(const AddressingMode &mode);
     void DEX();
     void DEY();
-    uint8_t DEC(AddressingMode mode);
+    uint8_t DEC(const AddressingMode &mode);
     void PLA();
     void PLP();
     void PHP();
-    void BIT(AddressingMode mode);
-    void COMPARE(AddressingMode mode, uint8_t compare_with);
+    void BIT(const AddressingMode &mode);
+    void COMPARE(const AddressingMode &mode, uint8_t compare_with);
     void BRANCH(bool condition);
 
 private:
