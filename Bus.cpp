@@ -5,12 +5,15 @@
 #include "Bus.h"
 #include <iostream>
 
-namespace EM {
-Bus::Bus() {
+namespace EM
+{
+Bus::Bus()
+{
     // connect cpu with bus
     cpu.connect_bus(this);
     // clear content of RAM
-    for (auto &i : ram) {
+    for (auto &i : ram)
+    {
         i = 0x00;
     }
 }
@@ -18,9 +21,11 @@ Bus::Bus() {
 Bus::~Bus() = default;
 
 // write data to RAM
-void Bus::write(uint16_t addr, uint8_t data) {
+void Bus::write(uint16_t addr, uint8_t data)
+{
     // ensure the address range not out of bound
-    if (addr < 0x00 || addr > 0xFFFF) {
+    if (addr < 0x00 || addr > 0xFFFF)
+    {
         std::cerr << "Write data out of range of RAM" << std::endl;
         exit(1);
     }
@@ -29,9 +34,11 @@ void Bus::write(uint16_t addr, uint8_t data) {
 }
 
 // read data from RAM
-uint8_t Bus::read(uint16_t addr) {
+uint8_t Bus::read(uint16_t addr)
+{
     // ensure the address range not out of bound
-    if (addr < 0x00 || addr > 0xFFFF) {
+    if (addr < 0x00 || addr > 0xFFFF)
+    {
         std::cerr << "Read data out of range of RAM" << std::endl;
         exit(1);
     }

@@ -10,9 +10,11 @@
 
 #include "CPU.h"
 
-namespace EM {
-class Bus {
-public:
+namespace EM
+{
+class Bus
+{
+  public:
     Bus();
     ~Bus();
 

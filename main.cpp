@@ -3,13 +3,15 @@
 #include <cassert>
 #include <iostream>
 
-void test_ops_working_together() {
+void test_ops_working_together()
+{
     auto bus = EM::Bus();
     bus.cpu.load_and_run(std::vector<uint8_t>{0xa9, 0xc0, 0xaa, 0xe8, 0x00});
     assert(0xc1 == bus.cpu.registers.x);
 }
 
-void test_0xa9_lda_immediate_load_data() {
+void test_0xa9_lda_immediate_load_data()
+{
     auto bus = EM::Bus();
     bus.cpu.load_and_run(std::vector<uint8_t>{0xa9, 0x05, 0x00});
 
@@ -19,7 +21,8 @@ void test_0xa9_lda_immediate_load_data() {
     assert(0b00 == (bus.cpu.registers.p & 0b0000'0000));
 }
 
-int main() {
+int main()
+{
     std::cout << "Test Bus and CPU" << std::endl;
 
     // auto bus = EM::Bus();

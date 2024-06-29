@@ -12,9 +12,11 @@
 #include <unordered_map>
 #include <vector>
 
-namespace EM {
+namespace EM
+{
 // Registers
-struct Registers {
+struct Registers
+{
     uint8_t a = 0x00;   // accumulator
     uint8_t x = 0x00;   // index register x
     uint8_t y = 0x00;   // index register y
@@ -24,7 +26,8 @@ struct Registers {
 };
 
 // Flags
-enum CpuFlags {
+enum CpuFlags
+{
     C = (1 << 0), // Carry bit
     Z = (1 << 1), // Zero
     I = (1 << 2), // Interrupt disable
@@ -36,7 +39,8 @@ enum CpuFlags {
 };
 
 // Addressing modes
-enum AddressingMode {
+enum AddressingMode
+{
     Immediate,
     ZeroPage,
     ZeroPage_X,
@@ -49,23 +53,25 @@ enum AddressingMode {
     NoneAddressing,
 };
 
-struct OpCode {
+struct OpCode
+{
     uint8_t code;
     std::string mnemonic;
     uint8_t len;
     uint8_t cycles;
     AddressingMode mode;
     // constructor
-    OpCode(int i_code, const char *str, int i_len, int i_cycles,
-           AddressingMode addressing_mode)
-        : code(i_code), mnemonic(str), len(i_len), cycles(i_cycles),
-          mode(addressing_mode) {}
+    OpCode(int i_code, const char *str, int i_len, int i_cycles, AddressingMode addressing_mode)
+        : code(i_code), mnemonic(str), len(i_len), cycles(i_cycles), mode(addressing_mode)
+    {
+    }
 };
 
 class Bus;
 
-class CPU {
-public:
+class CPU
+{
+  public:
     CPU();
     ~CPU();
 
@@ -80,7 +86,10 @@ public:
     EM::Bus *bus = nullptr;
 
     // Connect with bus
-    void connect_bus(Bus *b) { bus = b; }
+    void connect_bus(Bus *b)
+    {
+        bus = b;
+    }
 
     // Read & write from & to the bus
     uint8_t read(uint16_t addr) const;
@@ -101,7 +110,7 @@ public:
 
     void interpret(std::vector<uint8_t> program);
 
-private:
+  private:
     // Get and update flag
     bool get_flag(CpuFlags f);
     void set_flag(CpuFlags f, bool v);
@@ -120,7 +129,7 @@ private:
     void rol_accumulator();
     void ror_accumulator();
 
-private:
+  private:
     uint16_t get_operand_address(const AddressingMode &mode);
     /*** Instructions ***/
     void LDY(const AddressingMode &mode);
@@ -150,7 +159,7 @@ private:
     void COMPARE(const AddressingMode &mode, uint8_t compare_with);
     void BRANCH(bool condition);
 
-private:
+  private:
     const uint16_t STACK = 0x0100;
     const uint16_t STACK_RESET = 0xfd;
 };
