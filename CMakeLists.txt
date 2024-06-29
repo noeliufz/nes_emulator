@@ -27,11 +27,13 @@ include_directories(${SDL2_INCLUDE_DIRS})
 
 # 添加cpu_test可执行文件
 add_executable(cpu_test
-    cpu_test.cpp
-    CPU.h
     Bus.cpp
     Bus.h
+    cpu_test.cpp
+    CPU.h
     CPU.cpp
+    Opcode.h
+    Opcode.cpp
 )
 
 # 链接SDL2库到cpu_test
@@ -44,6 +46,8 @@ add_executable(cpu_game_test
     Bus.cpp
     Bus.h
     CPU.cpp
+    Opcode.h
+    Opcode.cpp
 )
 
 # 链接SDL2库到cpu_test
@@ -56,6 +60,8 @@ add_executable(Emulator
     Bus.cpp
     Bus.h
     CPU.cpp
+    Opcode.h
+    Opcode.cpp
 )
 
 # 链接SDL2库到Emulator

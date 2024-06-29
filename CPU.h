@@ -8,9 +8,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <string>
-#include <unordered_map>
 #include <vector>
+
+#include "OpCode.h"
 
 namespace EM
 {
@@ -36,35 +36,6 @@ enum CpuFlags
     U = (1 << 5), // *Unused* Break 2
     V = (1 << 6), // Overflow
     N = (1 << 7), // Negative
-};
-
-// Addressing modes
-enum AddressingMode
-{
-    Immediate,
-    ZeroPage,
-    ZeroPage_X,
-    ZeroPage_Y,
-    Absolute,
-    Absolute_X,
-    Absolute_Y,
-    Indirect_X,
-    Indirect_Y,
-    NoneAddressing,
-};
-
-struct OpCode
-{
-    uint8_t code;
-    std::string mnemonic;
-    uint8_t len;
-    uint8_t cycles;
-    AddressingMode mode;
-    // constructor
-    OpCode(int i_code, const char *str, int i_len, int i_cycles, AddressingMode addressing_mode)
-        : code(i_code), mnemonic(str), len(i_len), cycles(i_cycles), mode(addressing_mode)
-    {
-    }
 };
 
 class Bus;
