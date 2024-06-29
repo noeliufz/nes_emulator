@@ -3,6 +3,7 @@
 //
 #include "CPU.h"
 
+#include <arm_neon.h>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -82,11 +83,9 @@ void CPU::run() {
 }
 
 void CPU::run_with_callback(std::function<void(CPU &)> callback) {
+    uint8_t data0x10 = read(0x10);
     while (true) {
         auto code = read(registers.pc);
-        // auto code = bus->ram[registers.pc];
-        // std::cout << "pc " << registers.pc << " code " << std::hex
-        // << static_cast<int>(code) << std::endl;
         ++registers.pc;
         auto state = registers.pc;
 
@@ -1273,26 +1272,45 @@ uint16_t CPU::get_operand_address(const AddressingMode &mode) {
 ///////////////////////////////////////////////////////////////////////////////
 // Instructions
 
-void CPU::set_register_a(const uint8_t &value) {
+void CPU::set_register_a(const uint8_t value) {
     registers.a = value;
     update_zero_and_negative_flags(registers.a);
 }
 
+// void CPU::add_to_register_a(uint8_t data) {
+//     uint16_t sum =
+//         (uint16_t)registers.a + (uint16_t)data + (uint16_t)get_flag(C) ==
+//         true
+//             ? 1
+//             : 0;
+//
+//     // set carry flag
+//     set_flag(C, sum > 0xff);
+//
+//     uint8_t result = (uint8_t)sum;
+//
+//     // set overflow flag
+//     set_flag(V, ((data ^ result) & (result ^ registers.a) & 0x80) != 0);
+//
+//     set_register_a(result);
+// }
+
 void CPU::add_to_register_a(uint8_t data) {
-    uint16_t sum =
-        (uint16_t)registers.a + (uint16_t)data + get_flag(C) == true ? 1 : 0;
+    // Calculate the sum including the carry flag
+    uint16_t sum = static_cast<uint16_t>(registers.a) +
+                   static_cast<uint16_t>(data) + (get_flag(C) ? 1 : 0);
 
-    // set carry flag
-    set_flag(C, sum > 0xff);
+    // Set carry flag
+    set_flag(C, sum > 0xFF);
 
-    uint8_t result = (uint8_t)sum;
+    uint8_t result = static_cast<uint8_t>(sum & 0xFF);
 
-    // set overflow flag
-    set_flag(V, ((data ^ result) & (result ^ registers.a) & 0x80) != 0);
+    // Set overflow flag
+    set_flag(V, ((registers.a ^ result) & (data ^ result) & 0x80) != 0);
 
+    // Update the register A
     set_register_a(result);
 }
-
 uint8_t CPU::stack_pop() {
     ++registers.sp;
     return read(STACK + (uint16_t)registers.sp);
@@ -1369,11 +1387,20 @@ void CPU::INY() {
 }
 
 void CPU::SBC(const AddressingMode &mode) {
-    auto addr = get_operand_address(mode);
-    auto data = read(addr);
-    // change data to int8_t,  take (-data-1) and cast back to uint8_t
-    uint8_t result = static_cast<uint8_t>(-static_cast<int8_t>(data) - 1);
-    add_to_register_a(result);
+    // A - M - C̅ -> A
+    uint16_t addr = get_operand_address(mode);
+    uint8_t data = read(addr);
+
+    uint16_t value = static_cast<uint16_t>(data);
+    uint16_t carry_in = get_flag(C) ? 0 : 1;
+    uint16_t result = static_cast<uint16_t>(registers.a) - value - carry_in;
+
+    registers.a = static_cast<uint8_t>(result & 0xFF);
+
+    set_flag(N, registers.a & 0x80);
+    set_flag(Z, registers.a == 0);
+    set_flag(C, result < 0x100);
+    set_flag(V, ((registers.a ^ result) & (registers.a ^ data) & 0x80) != 0);
 }
 
 void CPU::ADC(const AddressingMode &mode) {
@@ -1552,8 +1579,8 @@ void CPU::COMPARE(const AddressingMode &mode, uint8_t compare_with) {
 
 void CPU::BRANCH(bool condition) {
     if (condition) {
-        int8_t jump = (int8_t)read(registers.pc);
-        auto jump_addr = registers.pc + 1 + (uint16_t)jump;
+        int8_t jump = static_cast<int8_t>(read(registers.pc));
+        auto jump_addr = registers.pc + 1 + static_cast<uint16_t>(jump);
         registers.pc = jump_addr;
     }
 }

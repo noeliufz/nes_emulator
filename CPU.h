@@ -109,7 +109,7 @@ private:
     void update_negative_flags(const uint8_t result);
 
     // set registers and stack
-    void set_register_a(const uint8_t &value);
+    void set_register_a(const uint8_t value);
     void add_to_register_a(uint8_t data);
     uint8_t stack_pop();
     void stack_push(uint8_t data);
