@@ -628,11 +628,6 @@ void CPU::update_negative_flags(const uint8_t result)
     set_flag(N, (result >> 7) == 1);
 }
 
-const OpCode *CPU::get_opcode(uint8_t code)
-{
-    return opcode_map->find(code) != opcode_map->end() ? (*opcode_map)[code] : nullptr;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Get operand address in different addressing mode
 uint16_t CPU::get_operand_address(const AddressingMode &mode)

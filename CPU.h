@@ -75,12 +75,6 @@ class CPU
     void run();
     void run_with_callback(std::function<void(CPU &)> callback);
 
-    void init_opcodes();
-    void init_opcode_map();
-    const OpCode *get_opcode(uint8_t code);
-
-    void interpret(std::vector<uint8_t> program);
-
   private:
     // Get and update flag
     bool get_flag(CpuFlags f);
