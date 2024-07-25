@@ -5,20 +5,20 @@
 
 void test_ops_working_together()
 {
-    auto bus = EM::Bus();
-    bus.cpu.load_and_run(std::vector<uint8_t>{0xa9, 0xc0, 0xaa, 0xe8, 0x00});
-    assert(0xc1 == bus.cpu.registers.x);
+    auto cpu = EM::CPU();
+    cpu.load_and_run(std::vector<uint8_t>{0xa9, 0xc0, 0xaa, 0xe8, 0x00});
+    assert(0xc1 == cpu.registers.x);
 }
 
 void test_0xa9_lda_immediate_load_data()
 {
-    auto bus = EM::Bus();
-    bus.cpu.load_and_run(std::vector<uint8_t>{0xa9, 0x05, 0x00});
+    auto cpu = EM::CPU();
+    cpu.load_and_run(std::vector<uint8_t>{0xa9, 0x05, 0x00});
 
-    assert(0x5 == bus.cpu.registers.a);
-    assert(0x5 == bus.cpu.read(0x8001));
-    assert(0b00 == (bus.cpu.registers.p & 0b0000'0010));
-    assert(0b00 == (bus.cpu.registers.p & 0b0000'0000));
+    assert(0x5 == cpu.registers.a);
+    assert(0x5 == cpu.read(0x8001));
+    assert(0b00 == (cpu.registers.p & 0b0000'0010));
+    assert(0b00 == (cpu.registers.p & 0b0000'0000));
 }
 
 int main()

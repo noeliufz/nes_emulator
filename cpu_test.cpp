@@ -7,60 +7,60 @@
 
 void test_ops_working_together()
 {
-    auto bus = EM::Bus();
-    bus.cpu.load_and_run(std::vector<uint8_t>{0xa9, 0xc0, 0xaa, 0xe8, 0x00});
-    assert(0xc1 == bus.cpu.registers.x);
+    auto cpu = EM::CPU();
+    cpu.load_and_run(std::vector<uint8_t>{0xa9, 0xc0, 0xaa, 0xe8, 0x00});
+    assert(0xc1 == cpu.registers.x);
 }
 
 void test_0xa9_lda_immediate_load_data()
 {
-    auto bus = EM::Bus();
-    bus.cpu.load_and_run(std::vector<uint8_t>{0xa9, 0x05, 0x00});
+    auto cpu = EM::CPU();
+    cpu.load_and_run(std::vector<uint8_t>{0xa9, 0x05, 0x00});
 
-    assert(0x5 == bus.cpu.registers.a);
-    assert(0x5 == bus.cpu.read(0x8001));
-    assert(0b00 == (bus.cpu.registers.p & 0b0000'0010));
-    assert(0b00 == (bus.cpu.registers.p & 0b0000'0000));
+    assert(0x5 == cpu.registers.a);
+    assert(0x5 == cpu.read(0x8001));
+    assert(0b00 == (cpu.registers.p & 0b0000'0010));
+    assert(0b00 == (cpu.registers.p & 0b0000'0000));
 }
 
 void test_5_ops_working_together()
 {
-    auto bus = EM::Bus();
-    bus.cpu.load_and_run(std::vector<uint8_t>{0xa9, 0xc0, 0xaa, 0xe8, 0x00});
-    assert(0xc1 == bus.cpu.registers.x);
+    auto cpu = EM::CPU();
+    cpu.load_and_run(std::vector<uint8_t>{0xa9, 0xc0, 0xaa, 0xe8, 0x00});
+    assert(0xc1 == cpu.registers.x);
 }
 
 void test_0xaa_tax_move_to_x()
 {
-    auto bus = EM::Bus();
-    bus.cpu.load(std::vector<uint8_t>{0xaa, 0x00});
-    bus.cpu.reset();
-    bus.cpu.registers.a = 10;
-    bus.cpu.run();
-    assert(10 == bus.cpu.registers.x);
+    auto cpu = EM::CPU();
+    cpu.load(std::vector<uint8_t>{0xaa, 0x00});
+    cpu.reset();
+    cpu.registers.a = 10;
+    cpu.run();
+    assert(10 == cpu.registers.x);
 }
 
 void test_inx_overflow()
 {
-    auto bus = EM::Bus();
-    bus.cpu.load(std::vector<uint8_t>{0xe8, 0xe8, 0x00});
-    bus.cpu.reset();
-    bus.cpu.registers.x = 0xff;
-    bus.cpu.run();
-    assert(1 == bus.cpu.registers.x);
+    auto cpu = EM::CPU();
+    cpu.load(std::vector<uint8_t>{0xe8, 0xe8, 0x00});
+    cpu.reset();
+    cpu.registers.x = 0xff;
+    cpu.run();
+    assert(1 == cpu.registers.x);
 }
 
 void test_lda_from_memory()
 {
-    auto bus = EM::Bus();
-    bus.cpu.write(0x10, 0x55);
-    bus.cpu.load_and_run(std::vector<uint8_t>{0xa5, 0x10, 0x00});
-    assert(0x55 == bus.cpu.registers.a);
+    auto cpu = EM::CPU();
+    cpu.write(0x10, 0x55);
+    cpu.load_and_run(std::vector<uint8_t>{0xa5, 0x10, 0x00});
+    assert(0x55 == cpu.registers.a);
 }
 
 void test_game()
 {
-    auto bus = EM::Bus();
+    auto cpu = EM::CPU();
     std::vector<uint8_t> game_code{
         0x20, 0x06, 0x06, 0x20, 0x38, 0x06, 0x20, 0x0d, 0x06, 0x20, 0x2a, 0x06, 0x60, 0xa9, 0x02, 0x85, 0x02, 0xa9,
         0x04, 0x85, 0x03, 0xa9, 0x11, 0x85, 0x10, 0xa9, 0x10, 0x85, 0x12, 0xa9, 0x0f, 0x85, 0x14, 0xa9, 0x04, 0x85,
@@ -80,8 +80,8 @@ void test_game()
         0x10, 0x29, 0x1f, 0xc9, 0x1f, 0xf0, 0x01, 0x60, 0x4c, 0x35, 0x07, 0xa0, 0x00, 0xa5, 0xfe, 0x91, 0x00, 0x60,
         0xa6, 0x03, 0xa9, 0x00, 0x81, 0x10, 0xa2, 0x00, 0xa9, 0x01, 0x81, 0x10, 0x60, 0xa2, 0x00, 0xea, 0xea, 0xca,
         0xd0, 0xfb, 0x60};
-    bus.cpu.load(game_code);
-    bus.cpu.reset();
+    cpu.load(game_code);
+    cpu.reset();
 }
 
 int main()

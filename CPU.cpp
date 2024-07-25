@@ -11,6 +11,7 @@
 #include "Bus.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -30,6 +31,8 @@ CPU::CPU()
     registers.sp = STACK_RESET;
     registers.p = 0b100100; // status
     registers.pc = 0;       // program counter
+
+    bus = new Bus();
 };
 
 CPU::~CPU()
