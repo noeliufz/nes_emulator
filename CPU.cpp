@@ -420,7 +420,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             {
                 auto lo = read(addr);
                 auto hi = read(addr & 0xFF00);
-                ref = ((uint16_t)hi) << 8 | ((uint16_t)lo);
+                ref = (static_cast<uint16_t>(hi)) << 8 | (static_cast<uint16_t>(lo));
             }
             else
             {
@@ -595,7 +595,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
         if (state == registers.pc)
         {
-            registers.pc += (uint16_t)(op->len - 1);
+            registers.pc += static_cast<uint16_t>((op->len - 1));
         }
 
         callback(*this);
@@ -638,48 +638,48 @@ uint16_t CPU::get_operand_address(const AddressingMode &mode)
         return registers.pc;
 
     case ZeroPage:
-        return (uint16_t)read(registers.pc);
+        return static_cast<uint16_t>(read(registers.pc));
 
     case Absolute:
         return read_u16(registers.pc);
 
     case ZeroPage_X: {
         auto pos = read(registers.pc);
-        // wrappign add
-        uint16_t addr = (uint16_t)(pos + registers.x);
+        // wrapping add
+        uint16_t addr = static_cast<uint16_t>((pos + registers.x));
         return addr;
     }
     case ZeroPage_Y: {
         auto pos = read(registers.pc);
-        // wrappign add
-        uint16_t addr = (uint16_t)(pos + registers.y);
+        // wrapping add
+        uint16_t addr = static_cast<uint16_t>((pos + registers.y));
         return addr;
     }
 
     case Absolute_X: {
         auto base = read_u16(registers.pc);
-        uint16_t addr = base + (uint16_t)registers.x;
+        uint16_t addr = base + static_cast<uint16_t>(registers.x);
         return addr;
     }
     case Absolute_Y: {
         auto base = read_u16(registers.pc);
-        uint16_t addr = base + (uint16_t)registers.y;
+        uint16_t addr = base + static_cast<uint16_t>(registers.y);
         return addr;
     }
 
     case Indirect_X: {
         auto base = read(registers.pc);
-        uint8_t ptr = (uint8_t)base + registers.x;
-        auto lo = read((uint16_t)ptr);
-        auto hi = read((uint16_t)(ptr + 1));
-        return (uint16_t)((uint16_t)hi) << 8 | ((uint16_t)lo);
+        uint8_t ptr = static_cast<uint8_t>(base) + registers.x;
+        auto lo = read(static_cast<uint16_t>(ptr));
+        auto hi = read(static_cast<uint16_t>((ptr + 1)));
+        return static_cast<uint16_t>((static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo))));
     }
     case Indirect_Y: {
         auto base = read(registers.pc);
-        auto lo = read((uint16_t)base);
-        auto hi = read((uint16_t)(base + 1));
-        auto deref_base = ((uint16_t)hi) << 8 | ((uint16_t)lo);
-        auto deref = deref_base + ((uint16_t)registers.y);
+        auto lo = read(static_cast<uint16_t>(base));
+        auto hi = read(static_cast<uint16_t>((base + 1)));
+        auto deref_base = (static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)));
+        auto deref = deref_base + (static_cast<uint16_t>(registers.y));
         return deref;
     }
 
@@ -719,11 +719,11 @@ void CPU::add_to_register_a(uint8_t data)
 uint8_t CPU::stack_pop()
 {
     ++registers.sp;
-    return read(STACK + (uint16_t)registers.sp);
+    return read(STACK + static_cast<uint16_t>(registers.sp));
 }
 void CPU::stack_push(uint8_t data)
 {
-    write(STACK + (uint16_t)registers.sp, data);
+    write(STACK + static_cast<uint16_t>(registers.sp), data);
     --registers.sp;
 }
 uint16_t CPU::stack_pop_u16()
