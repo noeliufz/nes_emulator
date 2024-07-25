@@ -48,24 +48,6 @@ CPU::CPU(Bus *bus)
 
 CPU::~CPU()
 {
-    if (!opcodes)
-    {
-        for (auto [key, value] : *opcode_map)
-        {
-            delete value;
-            value = nullptr;
-        }
-        delete opcodes;
-    }
-    if (!opcodes)
-    {
-        for (auto value : *opcodes)
-        {
-            delete value;
-            value = nullptr;
-        }
-        delete opcode_map;
-    }
     opcodes = nullptr;
     opcode_map = nullptr;
 };
@@ -143,7 +125,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             auto it = opcode_map->find(code);
             if (it != opcode_map->end())
             {
-                op = it->second;
+                op = it->second.get();
             }
             else
             {

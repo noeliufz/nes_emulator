@@ -51,8 +51,8 @@ class CPU
     Registers registers;
 
     // Opcode map
-    std::unordered_map<uint8_t, const OpCode *> *opcode_map = nullptr;
-    std::vector<const OpCode *> *opcodes = nullptr;
+    std::unique_ptr<std::unordered_map<uint8_t, std::unique_ptr<OpCode>>> opcode_map = nullptr;
+    std::unique_ptr<std::vector< std::unique_ptr<OpCode>>> opcodes = nullptr;
 
     // Linkage with bus
     EM::Bus *bus = nullptr;

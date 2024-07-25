@@ -47,22 +47,22 @@ class OpCodeSingleton
         return instance;
     }
 
-    static std::unordered_map<uint8_t, const OpCode *> *get_opcode_map()
+    static std::unique_ptr<std::unordered_map<uint8_t,  std::unique_ptr<OpCode>>> get_opcode_map()
     {
-        return opcode_map;
+        return std::move(opcode_map);
     }
 
-    static std::vector<const OpCode *> *get_opcodes()
+    static std::unique_ptr<std::vector< std::unique_ptr<OpCode>>> get_opcodes()
     {
-        return opcodes;
+        return std::move(opcodes);
     }
 
     OpCodeSingleton(const OpCodeSingleton &) = delete;
     OpCodeSingleton &operator=(const OpCodeSingleton &) = delete;
 
   private:
-    static std::unordered_map<uint8_t, const OpCode *> *opcode_map;
-    static std::vector<const OpCode *> *opcodes;
+    static std::unique_ptr<std::unordered_map<uint8_t,  std::unique_ptr<OpCode>>> opcode_map;
+    static std::unique_ptr<std::vector< std::unique_ptr<OpCode>>> opcodes;
     static void init_opcodes();
     static void init_opcode_map();
 
