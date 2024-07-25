@@ -11,7 +11,6 @@
 #include "Bus.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>
-#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -31,24 +30,42 @@ CPU::CPU()
     registers.sp = STACK_RESET;
     registers.p = 0b100100; // status
     registers.pc = 0;       // program counter
+};
 
-    bus = new Bus();
+CPU::CPU(Bus *bus)
+{
+    const EM::OpCodeSingleton &instance{EM::OpCodeSingleton::get_instance()};
+    opcodes = instance.get_opcodes();
+    opcode_map = instance.get_opcode_map();
+    registers.a = 0;
+    registers.x = 0;
+    registers.y = 0;
+    registers.sp = STACK_RESET;
+    registers.p = 0b100100; // status
+    registers.pc = 0;       // program counter
+    this->bus = bus;
 };
 
 CPU::~CPU()
 {
-    for (auto [key, value] : *opcode_map)
+    if (!opcodes)
     {
-        delete value;
-        value = nullptr;
+        for (auto [key, value] : *opcode_map)
+        {
+            delete value;
+            value = nullptr;
+        }
+        delete opcodes;
     }
-    for (auto value : *opcodes)
+    if (!opcodes)
     {
-        delete value;
-        value = nullptr;
+        for (auto value : *opcodes)
+        {
+            delete value;
+            value = nullptr;
+        }
+        delete opcode_map;
     }
-    delete opcodes;
-    delete opcode_map;
     opcodes = nullptr;
     opcode_map = nullptr;
 };

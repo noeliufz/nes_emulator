@@ -41,6 +41,8 @@ target_link_libraries(cpu_test ${SDL2_LIBRARIES})
 
 # 添加cpu_game_test可执行文件
 add_executable(cpu_game_test
+    cartridge.h
+    cartridge.cpp
     cpu_game_test.cpp
     CPU.h
     Bus.cpp
@@ -52,6 +54,23 @@ add_executable(cpu_game_test
 
 # 链接SDL2库到cpu_test
 target_link_libraries(cpu_game_test ${SDL2_LIBRARIES})
+
+
+# 添加cpu_game_test可执行文件
+add_executable(rom_test
+    cartridge.h
+    cartridge.cpp
+    rom_test.cpp
+    CPU.h
+    Bus.cpp
+    Bus.h
+    CPU.cpp
+    Opcode.h
+    Opcode.cpp
+)
+
+# 链接SDL2库到cpu_test
+target_link_libraries(rom_test ${SDL2_LIBRARIES})
 
 # 添加Emulator可执行文件
 add_executable(Emulator

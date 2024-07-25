@@ -3,6 +3,7 @@
 //
 
 #include "Bus.h"
+#include <cstdint>
 #include <iostream>
 
 namespace EM
@@ -13,7 +14,18 @@ Bus::Bus()
     for (auto &i : ram)
     {
         i = 0x00;
-    }
+    };
+}
+
+Bus::Bus(Rom *rom)
+{
+    // clear content of RAM
+    for (auto &i : ram)
+    {
+        i = 0x00;
+    };
+
+    this->rom = rom;
 }
 
 Bus::~Bus() = default;
@@ -33,9 +45,13 @@ void Bus::write(uint16_t addr, uint8_t data)
         // TODO: PPU is not supported yet
         std::cerr << "PPU is not supported yet" << std::endl;
     }
+    else if (addr >= 0x8000 && addr <= 0xFFFF)
+    {
+        std::cerr << "Try to access 0x" << std::hex << addr << std::endl;
+    }
     else
     {
-        std::cerr << "Ignoring mem write-access at " << addr << std::endl;
+        std::cerr << "Ignoring mem write-access at 0x" << std::hex << addr << std::endl;
     }
 }
 
@@ -55,11 +71,26 @@ uint8_t Bus::read(uint16_t addr)
         std::cerr << "PPU is not supported yet" << std::endl;
         return 0;
     }
+    else if (addr >= 0x8000 && addr <= 0xFFFF)
+    {
+        return read_prg_rom(addr);
+    }
     else
     {
-        std::cerr << "Ignoring mem access at " << addr << std::endl;
+        std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
         return 0;
     }
 }
 
+// read prg rom
+uint8_t Bus::read_prg_rom(uint16_t addr)
+{
+    addr -= 0x8000;
+    if (rom->prg_rom.size() == 0x4000 && addr >= 0x4000)
+    {
+        // mirror if needed
+        addr = addr % 0x4000;
+    }
+    return rom->prg_rom[addr];
+}
 } // namespace EM

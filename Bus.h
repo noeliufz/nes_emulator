@@ -9,6 +9,7 @@
 #include <cstdint>
 
 #include "CPU.h"
+#include "cartridge.h"
 
 namespace EM
 {
@@ -21,14 +22,19 @@ class Bus
 {
   public:
     Bus();
+    Bus(Rom *rom);
     ~Bus();
 
     // RAM
     std::array<uint8_t, 2048> ram{};
 
+    // rom
+    Rom *rom = nullptr;
+
     // Read & write from & to the bus
     void write(uint16_t addr, uint8_t data);
     uint8_t read(uint16_t addr);
+    uint8_t read_prg_rom(uint16_t addr);
 };
 } // namespace EM
 
