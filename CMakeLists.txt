@@ -61,6 +61,8 @@ add_executable(rom_test
     cartridge.h
     cartridge.cpp
     rom_test.cpp
+    trace.h
+    trace.cpp
     CPU.h
     Bus.cpp
     Bus.h

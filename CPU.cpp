@@ -9,8 +9,10 @@
 #include <iostream>
 
 #include "Bus.h"
+#include "OpCode.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>
+#include <pthread.h>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
@@ -22,8 +24,6 @@ namespace EM
 CPU::CPU()
 {
     const EM::OpCodeSingleton &instance{EM::OpCodeSingleton::get_instance()};
-    opcodes = instance.get_opcodes();
-    opcode_map = instance.get_opcode_map();
     registers.a = 0;
     registers.x = 0;
     registers.y = 0;
@@ -35,8 +35,6 @@ CPU::CPU()
 CPU::CPU(Bus *bus)
 {
     const EM::OpCodeSingleton &instance{EM::OpCodeSingleton::get_instance()};
-    opcodes = instance.get_opcodes();
-    opcode_map = instance.get_opcode_map();
     registers.a = 0;
     registers.x = 0;
     registers.y = 0;
@@ -46,11 +44,7 @@ CPU::CPU(Bus *bus)
     this->bus = bus;
 };
 
-CPU::~CPU()
-{
-    opcodes = nullptr;
-    opcode_map = nullptr;
-};
+CPU::~CPU(){};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Bus linkage
@@ -122,8 +116,8 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         const EM::OpCode *op = nullptr;
         try
         {
-            auto it = opcode_map->find(code);
-            if (it != opcode_map->end())
+            auto it = opcode_map.find(code);
+            if (it != opcode_map.end())
             {
                 op = it->second.get();
             }
@@ -140,6 +134,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             std::cerr << e.what() << std::endl;
         }
 
+        std::cout << "data at addr 0: " << read(0) << std::endl;
         switch (code)
         {
         case 0xa9:
@@ -434,7 +429,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
         /* JSR */
         case 0x20: {
-            stack_push_u16(registers.pc + 1);
+            stack_push_u16(registers.pc + 2 - 1);
             auto target = read_u16(registers.pc);
             registers.pc = target;
             break;
@@ -589,6 +584,332 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             break;
         }
 
+        /* Unofficial */
+        /* DCP */
+        case 0xc7:
+        case 0xd7:
+        case 0xcf:
+        case 0xdf:
+        case 0xdb:
+        case 0xd3:
+        case 0xc3: {
+            const auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            --data;
+            write(addr, data);
+            if (data < registers.a)
+            {
+                set_flag(C, true);
+            }
+            update_zero_and_negative_flags(registers.a - data);
+            break;
+        }
+
+        /* RLA */
+        case 0x27:
+        case 0x37:
+        case 0x2f:
+        case 0x3f:
+        case 0x3b:
+        case 0x33:
+        case 0x23: {
+            auto data = ROL(op->mode);
+            set_register_a(data & registers.a);
+            break;
+        }
+
+        /* SLO */
+        case 0x07:
+        case 0x17:
+        case 0x0f:
+        case 0x1f:
+        case 0x1b:
+        case 0x03:
+        case 0x13: {
+            auto data = ASL(op->mode);
+            set_register_a(data | registers.a);
+            break;
+        }
+
+        /* SRE */
+        case 0x47:
+        case 0x57:
+        case 0x4f:
+        case 0x5f:
+        case 0x5b:
+        case 0x43:
+        case 0x53: {
+            auto data = LSR(op->mode);
+            set_register_a(data ^ registers.a);
+            break;
+        }
+
+        /* SKB */
+        case 0x80:
+        case 0x82:
+        case 0x89:
+        case 0xc2:
+        case 0xe2: {
+            break;
+        }
+
+        /* AXS */
+        case 0xcb: {
+            const auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            auto x_and_a = registers.x & registers.a;
+            auto result = x_and_a - data;
+
+            if (data <= x_and_a)
+            {
+                set_flag(C, true);
+            }
+
+            update_zero_and_negative_flags(result);
+            registers.x = result;
+            break;
+        }
+
+        /* ARR */
+        case 0x6b: {
+            auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            set_register_a(data & registers.a);
+            ror_accumulator();
+
+            auto result = registers.a;
+            auto bit_5 = (result >> 5) & 1;
+            auto bit_6 = (result >> 6) & 1;
+
+            if (bit_6 == 1)
+            {
+                set_flag(C, true);
+            }
+            else
+            {
+                set_flag(C, false);
+            }
+
+            if ((bit_5 ^ bit_6) == 1)
+            {
+                set_flag(V, true);
+            }
+            else
+            {
+                set_flag(V, true);
+            }
+
+            update_zero_and_negative_flags(result);
+
+            break;
+        }
+
+        /* Unofficial SBC */
+        case 0xeb: {
+            auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            // not sure
+            sub_from_register_a(data);
+            break;
+        }
+
+        /* ANC */
+        case 0x0b:
+        case 0x2b: {
+            auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            set_register_a(data & registers.a);
+            if (get_flag(N))
+            {
+                set_flag(C, true);
+            }
+            else
+            {
+                set_flag(C, false);
+            }
+            break;
+        }
+
+        /* ALR */
+        case 0x4b: {
+            auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            set_register_a(data & registers.a);
+            lsr_accumulator();
+            break;
+        }
+
+        /* NOP read */
+        case 0x04:
+        case 0x44:
+        case 0x64:
+        case 0x14:
+        case 0x34:
+        case 0x54:
+        case 0x74:
+        case 0xd4:
+        case 0xf4:
+        case 0x0c:
+        case 0x1c:
+        case 0x3c:
+        case 0x5c:
+        case 0x7c:
+        case 0xdc:
+        case 0xfc: {
+            auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            /* do nothing */
+            break;
+        }
+
+        /* RRA */
+        case 0x67:
+        case 0x77:
+        case 0x6f:
+        case 0x7f:
+        case 0x7b:
+        case 0x63:
+        case 0x73: {
+            auto data = ROR(op->mode);
+            add_to_register_a(data);
+            break;
+        }
+
+        /* ISB */
+        case 0xe7:
+        case 0xf7:
+        case 0xef:
+        case 0xff:
+        case 0xfb:
+        case 0xe3:
+        case 0xf3: {
+            auto data = INC(op->mode);
+            sub_from_register_a(data);
+            break;
+        }
+
+        /* NOPs */
+        case 0x02:
+        case 0x12:
+        case 0x22:
+        case 0x32:
+        case 0x42:
+        case 0x52:
+        case 0x62:
+        case 0x72:
+        case 0x92:
+        case 0xb2:
+        case 0xd2:
+        case 0xf2: {
+            break;
+        }
+
+        case 0x1a:
+        case 0x3a:
+        case 0x5a:
+        case 0x7a:
+        case 0xda:
+        case 0xfa: {
+            break;
+        }
+
+        /* LAX */
+        case 0xa7:
+        case 0xb7:
+        case 0xaf:
+        case 0xbf:
+        case 0xa3:
+        case 0xb3: {
+            auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            set_register_a(data);
+            registers.x = registers.a;
+            break;
+        }
+
+        /* SAX */
+        case 0x87:
+        case 0x97:
+        case 0x8f:
+        case 0x83: {
+            auto data = registers.a & registers.x;
+            auto addr = get_operand_address(op->mode);
+            write(addr, data);
+            break;
+        }
+
+        /* LXA */
+        case 0xab: {
+            LDA(op->mode);
+            TAX();
+            break;
+        }
+
+        /* XAA */
+        case 0x8b: {
+            registers.a = registers.x;
+            update_zero_and_negative_flags(registers.a);
+            auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            set_register_a(data & registers.a);
+            break;
+        }
+
+        /* LAS */
+        case 0xbb: {
+            auto addr = get_operand_address(op->mode);
+            auto data = read(addr);
+            data = data & registers.sp;
+            registers.a = data;
+            registers.x = data;
+            registers.sp = data;
+            update_zero_and_negative_flags(data);
+            break;
+        }
+
+        /* TAS */
+        case 0x9b: {
+            auto data = registers.a & registers.x;
+            registers.sp = data;
+            auto mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.y);
+            data = (static_cast<uint8_t>(mem_addr >> 8) + 1) & registers.sp;
+            write(mem_addr, data);
+            break;
+        }
+
+        /* AHX Indirect Y */
+        case 0x93: {
+            auto pos = read(registers.pc);
+            auto mem_addr = read_u16(static_cast<uint16_t>(pos)) + static_cast<uint16_t>(registers.y);
+            auto data = registers.a & registers.x & static_cast<uint8_t>(mem_addr >> 8);
+            write(mem_addr, data);
+            break;
+        }
+
+        /* AHX Absolute Y */
+        case 0x9f: {
+            auto mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.y);
+            auto data = registers.a & registers.x & static_cast<uint8_t>(mem_addr >> 8);
+            write(mem_addr, data);
+            break;
+        }
+
+        /* SHX */
+        case 0x9e: {
+            auto mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.y);
+            auto data = registers.x & (static_cast<uint8_t>(mem_addr >> 8) + 1);
+            write(mem_addr, data);
+            break;
+        }
+
+        /* SHY */
+        case 0x9c: {
+            auto mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.x);
+            auto data = registers.y & (static_cast<uint8_t>(mem_addr >> 8) + 1);
+            write(mem_addr, data);
+            break;
+        }
+
         default:
             std::cerr << "Not implemented code: " << std::hex << static_cast<int>(code) << std::endl;
             break;
@@ -632,13 +953,10 @@ void CPU::update_negative_flags(const uint8_t result)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Get operand address in different addressing mode
-uint16_t CPU::get_operand_address(const AddressingMode &mode)
+uint16_t CPU::get_absolute_address(const AddressingMode &mode, uint16_t addr)
 {
     switch (mode)
     {
-    case Immediate:
-        return registers.pc;
-
     case ZeroPage:
         return static_cast<uint16_t>(read(registers.pc));
 
@@ -646,15 +964,15 @@ uint16_t CPU::get_operand_address(const AddressingMode &mode)
         return read_u16(registers.pc);
 
     case ZeroPage_X: {
-        auto pos = read(registers.pc);
+        uint16_t pos = static_cast<uint16_t>(read(registers.pc));
         // wrapping add
-        uint16_t addr = static_cast<uint16_t>((pos + registers.x));
+        uint16_t addr = pos + static_cast<uint16_t>(registers.x);
         return addr;
     }
     case ZeroPage_Y: {
-        auto pos = read(registers.pc);
+        uint16_t pos = static_cast<uint16_t>(read(registers.pc));
         // wrapping add
-        uint16_t addr = static_cast<uint16_t>((pos + registers.y));
+        uint16_t addr = pos + static_cast<uint16_t>(registers.y);
         return addr;
     }
 
@@ -671,7 +989,7 @@ uint16_t CPU::get_operand_address(const AddressingMode &mode)
 
     case Indirect_X: {
         auto base = read(registers.pc);
-        uint8_t ptr = static_cast<uint8_t>(base) + registers.x;
+        uint8_t ptr = base + registers.x;
         auto lo = read(static_cast<uint16_t>(ptr));
         auto hi = read(static_cast<uint16_t>((ptr + 1)));
         return static_cast<uint16_t>((static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo))));
@@ -685,12 +1003,23 @@ uint16_t CPU::get_operand_address(const AddressingMode &mode)
         return deref;
     }
 
-    case NoneAddressing: {
+    default: {
         throw std::runtime_error("Unknown supported");
     }
     }
 
     return 0; // todo
+}
+
+uint16_t CPU::get_operand_address(const AddressingMode &mode)
+{
+    switch (mode)
+    {
+    case Immediate:
+        return registers.pc;
+    default:
+        return get_absolute_address(mode, registers.pc);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -718,6 +1047,16 @@ void CPU::add_to_register_a(uint8_t data)
     // Update the register A
     set_register_a(result);
 }
+void CPU::sub_from_register_a(uint8_t data)
+{
+    // not sure
+    int8_t negated_data = -static_cast<int8_t>(data);            // wrapping_neg
+    int8_t subtracted_data = negated_data - 1;                   // wrapping_sub(1)
+    uint8_t final_value = static_cast<uint8_t>(subtracted_data); // as u8
+
+    add_to_register_a(final_value);
+}
+
 uint8_t CPU::stack_pop()
 {
     ++registers.sp;
@@ -760,13 +1099,16 @@ void CPU::LDX(const AddressingMode &mode)
 void CPU::LDA(const AddressingMode &mode)
 {
     auto addr = get_operand_address(mode);
-    auto value = read(addr);
+    uint8_t value = read(addr);
+    std::cout << "LDA value 0x" << std::hex << static_cast<int8_t>(value) << " addr: 0x" << addr << std::endl;
     set_register_a(value);
 }
 
 void CPU::STA(const AddressingMode &mode)
 {
     auto addr = get_operand_address(mode);
+    std::cout << "STA addr: 0x" << std::hex << static_cast<int8_t>(addr) << " register a: 0x" << registers.a
+              << std::endl;
     write(addr, registers.a);
 }
 
@@ -817,12 +1159,14 @@ void CPU::SBC(const AddressingMode &mode)
     uint16_t carry_in = get_flag(C) ? 0 : 1;
     uint16_t result = static_cast<uint16_t>(registers.a) - value - carry_in;
 
-    registers.a = static_cast<uint8_t>(result & 0xFF);
+    uint8_t result8 = static_cast<uint8_t>(result & 0xFF);
 
-    set_flag(N, registers.a & 0x80);
-    set_flag(Z, registers.a == 0);
+    set_flag(N, result8 & 0x80);
+    set_flag(Z, result8 == 0);
     set_flag(C, result < 0x100);
-    set_flag(V, ((registers.a ^ result) & (registers.a ^ data) & 0x80) != 0);
+    set_flag(V, ((registers.a ^ result8) & (registers.a ^ data) & 0x80) != 0);
+
+    registers.a = result8;
 }
 
 void CPU::ADC(const AddressingMode &mode)

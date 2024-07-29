@@ -3,11 +3,16 @@
 //
 
 #include "Bus.h"
+#include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <sstream>
+#include <stdexcept>
 
 namespace EM
 {
+using std::ostringstream;
+
 Bus::Bus()
 {
     // clear content of RAM
@@ -37,7 +42,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     if (addr >= RAM && addr <= RAM_MIRRORS_END)
     {
         uint16_t mirror_down_addr = addr & 0b00000111'11111111;
-        ram[mirror_down_addr] = data;
+        ram[static_cast<size_t>(mirror_down_addr)] = data;
     }
     else if (addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END)
     {
@@ -47,7 +52,9 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else if (addr >= 0x8000 && addr <= 0xFFFF)
     {
-        std::cerr << "Try to access 0x" << std::hex << addr << std::endl;
+        ostringstream oss;
+        oss << "Trying to access 0x" << std::hex << addr;
+        throw std::runtime_error(oss.str());
     }
     else
     {
@@ -62,7 +69,7 @@ uint8_t Bus::read(uint16_t addr)
     if (addr >= RAM && addr <= RAM_MIRRORS_END)
     {
         uint16_t mirror_down_addr = addr & 0b00000111'11111111;
-        return ram[mirror_down_addr];
+        return ram[static_cast<size_t>(mirror_down_addr)];
     }
     else if (addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END)
     {
@@ -77,6 +84,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else
     {
+        std::cout << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
         std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
         return 0;
     }
@@ -91,6 +99,6 @@ uint8_t Bus::read_prg_rom(uint16_t addr)
         // mirror if needed
         addr = addr % 0x4000;
     }
-    return rom->prg_rom[addr];
+    return rom->prg_rom[static_cast<size_t>(addr)];
 }
 } // namespace EM

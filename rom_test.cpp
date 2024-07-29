@@ -1,5 +1,6 @@
 #include "Bus.h"
 #include "CPU.h"
+#include "trace.h"
 #include <SDL.h>
 #include <SDL_pixels.h>
 #include <arm_neon.h>
@@ -171,12 +172,13 @@ int main()
     }
 
     // read Nes file
-    std::vector<uint8_t> bytes = readFile("snake.nes");
+    std::vector<uint8_t> bytes = readFile("nestest.nes");
     EM::Rom rom(bytes);
 
     auto bus = EM::Bus(&rom);
     auto cpu = EM::CPU(&bus);
     cpu.reset();
+    cpu.registers.pc = 0xC000;
 
     std::vector<uint8_t> screen_state(32 * 3 * 32, 0);
     std::random_device rd;
@@ -186,22 +188,23 @@ int main()
     SDL_Event event;
 
     cpu.run_with_callback([&](EM::CPU &cpu) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            handle_user_input(cpu, event);
-        }
-        cpu.write(0xfe, dist(rng));
+        std::cout << trace(cpu) << std::endl;
+        // SDL_Event event;
+        // while (SDL_PollEvent(&event))
+        // {
+        // handle_user_input(cpu, event);
+        // }
+        // cpu.write(0xfe, dist(rng));
 
-        if (read_screen_state(cpu, screen_state))
-        {
-            SDL_UpdateTexture(texture, nullptr, screen_state.data(), 32 * 3);
-            SDL_RenderClear(renderer);
-            SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-            SDL_RenderPresent(renderer);
-        }
-
-        std::this_thread::sleep_for(std::chrono::nanoseconds(70'000));
+        // if (read_screen_state(cpu, screen_state))
+        // {
+        //     SDL_UpdateTexture(texture, nullptr, screen_state.data(), 32 * 3);
+        //     SDL_RenderClear(renderer);
+        //     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+        //     SDL_RenderPresent(renderer);
+        // }
+        //
+        // std::this_thread::sleep_for(std::chrono::nanoseconds(70'000));
     });
 
     // clear resources

@@ -2,6 +2,8 @@
 #define MYNESEMULATOR__OPCODE_H_
 
 #include <cstdint>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -43,26 +45,34 @@ class OpCodeSingleton
   public:
     static const OpCodeSingleton &get_instance()
     {
-        static const OpCodeSingleton instance;
-        return instance;
+        std::call_once(initInstanceFlag, &OpCodeSingleton::initSingleton);
+        return *instance;
     }
 
-    static std::unique_ptr<std::unordered_map<uint8_t,  std::unique_ptr<OpCode>>> get_opcode_map()
+    static const std::unordered_map<uint8_t, std::shared_ptr<OpCode>> &get_opcode_map()
     {
-        return std::move(opcode_map);
+        return *opcode_map;
     }
 
-    static std::unique_ptr<std::vector< std::unique_ptr<OpCode>>> get_opcodes()
+    static const std::vector<std::shared_ptr<OpCode>> &get_opcodes()
     {
-        return std::move(opcodes);
+        return *opcodes;
     }
 
     OpCodeSingleton(const OpCodeSingleton &) = delete;
     OpCodeSingleton &operator=(const OpCodeSingleton &) = delete;
 
   private:
-    static std::unique_ptr<std::unordered_map<uint8_t,  std::unique_ptr<OpCode>>> opcode_map;
-    static std::unique_ptr<std::vector< std::unique_ptr<OpCode>>> opcodes;
+    static void initSingleton()
+    {
+        instance.reset(new OpCodeSingleton());
+    }
+
+    static std::unique_ptr<OpCodeSingleton> instance;
+    static std::once_flag initInstanceFlag;
+
+    static std::shared_ptr<std::unordered_map<uint8_t, std::shared_ptr<OpCode>>> opcode_map;
+    static std::shared_ptr<std::vector<std::shared_ptr<OpCode>>> opcodes;
     static void init_opcodes();
     static void init_opcode_map();
 

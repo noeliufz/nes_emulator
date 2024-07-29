@@ -1,4 +1,5 @@
 //
+//
 // Created by Fangzhou Liu on 22/11/2023.
 //
 
@@ -51,8 +52,9 @@ class CPU
     Registers registers;
 
     // Opcode map
-    std::unique_ptr<std::unordered_map<uint8_t, std::unique_ptr<OpCode>>> opcode_map = nullptr;
-    std::unique_ptr<std::vector< std::unique_ptr<OpCode>>> opcodes = nullptr;
+    const std::unordered_map<uint8_t, std::shared_ptr<OpCode>> &opcode_map =
+        EM::OpCodeSingleton::get_instance().get_opcode_map();
+    const std::vector<std::shared_ptr<OpCode>> &opcodes = EM::OpCodeSingleton::get_instance().get_opcodes();
 
     // Linkage with bus
     EM::Bus *bus = nullptr;
@@ -86,6 +88,7 @@ class CPU
     // set registers and stack
     void set_register_a(const uint8_t value);
     void add_to_register_a(uint8_t data);
+    void sub_from_register_a(uint8_t data);
     uint8_t stack_pop();
     void stack_push(uint8_t data);
     uint16_t stack_pop_u16();
@@ -96,7 +99,6 @@ class CPU
     void ror_accumulator();
 
   private:
-    uint16_t get_operand_address(const AddressingMode &mode);
     /*** Instructions ***/
     void LDY(const AddressingMode &mode);
     void LDX(const AddressingMode &mode);
@@ -124,6 +126,10 @@ class CPU
     void BIT(const AddressingMode &mode);
     void COMPARE(const AddressingMode &mode, uint8_t compare_with);
     void BRANCH(bool condition);
+
+  public:
+    uint16_t get_absolute_address(const AddressingMode &mode, uint16_t addr);
+    uint16_t get_operand_address(const AddressingMode &mode);
 
   private:
     const uint16_t STACK = 0x0100;
