@@ -1,6 +1,7 @@
 #ifndef MYNESEMULATOR__CARTRIDGE_H_
 #define MYNESEMULATOR__CARTRIDGE_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 namespace EM

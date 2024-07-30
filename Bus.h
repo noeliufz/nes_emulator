@@ -7,9 +7,12 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 
 #include "CPU.h"
 #include "cartridge.h"
+
+#include "ppu/ppu.h"
 
 namespace EM
 {
@@ -30,6 +33,8 @@ class Bus
 
     // rom
     Rom *rom = nullptr;
+
+    std::unique_ptr<NesPPU> ppu;
 
     // Read & write from & to the bus
     void write(uint16_t addr, uint8_t data);

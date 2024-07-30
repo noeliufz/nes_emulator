@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <stdexcept>
 
@@ -20,6 +21,7 @@ Bus::Bus()
     {
         i = 0x00;
     };
+    ppu = nullptr;
 }
 
 Bus::Bus(Rom *rom)
@@ -31,6 +33,8 @@ Bus::Bus(Rom *rom)
     };
 
     this->rom = rom;
+
+    ppu = std::make_unique<NesPPU>(this->rom->chr_rom, this->rom->screen_mirroring);
 }
 
 Bus::~Bus() = default;
@@ -44,11 +48,22 @@ void Bus::write(uint16_t addr, uint8_t data)
         uint16_t mirror_down_addr = addr & 0b00000111'11111111;
         ram[static_cast<size_t>(mirror_down_addr)] = data;
     }
-    else if (addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END)
+    else if (addr == 0x2000)
+    {
+        ppu->write_to_ctrl(data);
+    }
+    else if (addr == 0x2006)
+    {
+        ppu->write_to_ppu_addr(data);
+    }
+    else if (addr == 0x2007)
+    {
+        ppu->write_to_data(data);
+    }
+    else if (addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END)
     {
         uint16_t mirror_down_addr = addr & 0b00100000'00000111;
-        // TODO: PPU is not supported yet
-        std::cerr << "PPU is not supported yet" << std::endl;
+        write(mirror_down_addr, data);
     }
     else if (addr >= 0x8000 && addr <= 0xFFFF)
     {
@@ -71,12 +86,19 @@ uint8_t Bus::read(uint16_t addr)
         uint16_t mirror_down_addr = addr & 0b00000111'11111111;
         return ram[static_cast<size_t>(mirror_down_addr)];
     }
-    else if (addr >= PPU_REGISTERS && addr <= PPU_REGISTERS_MIRRORS_END)
+    else if (addr == 0x2000 || addr == 0x2001 || addr == 0x2003 || addr == 0x2005 || addr == 0x2006 || addr == 0x4014)
+    {
+        std::cerr << "Attempt to read from write-only PPU address 0x" << std::hex << addr << std::endl;
+        return 0;
+    }
+    else if (addr == 0x2007)
+    {
+        return ppu->read_data();
+    }
+    else if (addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END)
     {
         uint16_t mirror_down_addr = addr & 0b00100000'00000111;
-        // TODO: PPU is not supported yet
-        std::cerr << "PPU is not supported yet" << std::endl;
-        return 0;
+        return read(mirror_down_addr);
     }
     else if (addr >= 0x8000 && addr <= 0xFFFF)
     {
