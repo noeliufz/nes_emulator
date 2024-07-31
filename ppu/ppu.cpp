@@ -50,6 +50,10 @@ void EM::NesPPU::increment_vram_addr()
 {
     address_register.increment(ctrl.vram_addr_increment());
 }
+uint8_t EM::NesPPU::read_status()
+{
+    return 0;
+}
 uint8_t EM::NesPPU::read_data()
 {
     auto address = address_register.get();

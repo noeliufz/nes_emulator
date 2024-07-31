@@ -134,7 +134,6 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             std::cerr << e.what() << std::endl;
         }
 
-        std::cout << "data at addr 0: " << read(0) << std::endl;
         switch (code)
         {
         case 0xa9:

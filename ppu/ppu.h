@@ -36,6 +36,7 @@ class NesPPU
 
     void increment_vram_addr();
     uint8_t read_data();
+    uint8_t read_status();
     uint16_t mirror_vram_addr(uint16_t addr);
 };
 } // namespace EM
