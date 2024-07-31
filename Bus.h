@@ -6,6 +6,7 @@
 #define MYNESEMULATOR__BUS_H_
 
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 
@@ -28,10 +29,8 @@ class Bus
     Bus(Rom *rom);
     ~Bus();
 
-    // RAM
+    size_t cycles;
     std::array<uint8_t, 2048> ram{};
-
-    // rom
     Rom *rom = nullptr;
 
     std::unique_ptr<NesPPU> ppu;
@@ -40,6 +39,8 @@ class Bus
     void write(uint16_t addr, uint8_t data);
     uint8_t read(uint16_t addr);
     uint8_t read_prg_rom(uint16_t addr);
+
+    void tick(uint8_t cycle);
 };
 } // namespace EM
 

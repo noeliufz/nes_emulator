@@ -34,6 +34,8 @@ Bus::Bus(Rom *rom)
 
     this->rom = rom;
 
+    cycles = 0;
+
     ppu = std::make_unique<NesPPU>(this->rom->chr_rom, this->rom->screen_mirroring);
 }
 
@@ -122,5 +124,10 @@ uint8_t Bus::read_prg_rom(uint16_t addr)
         addr = addr % 0x4000;
     }
     return rom->prg_rom[static_cast<size_t>(addr)];
+}
+
+void Bus::tick(uint8_t cycle)
+{
+    cycles += static_cast<size_t>(cycle);
 }
 } // namespace EM

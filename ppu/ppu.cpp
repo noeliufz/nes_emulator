@@ -52,7 +52,11 @@ void EM::NesPPU::increment_vram_addr()
 }
 uint8_t EM::NesPPU::read_status()
 {
-    return 0;
+    auto data = status.snapshot();
+    status.reset_vblank_status();
+    address_register.reset_latch();
+    scroll.reset_latch();
+    return data;
 }
 uint8_t EM::NesPPU::read_data()
 {
@@ -109,5 +113,41 @@ uint16_t EM::NesPPU::mirror_vram_addr(uint16_t addr)
         return vram_index;
     }
 }
+bool EM::NesPPU::tick(uint8_t cycle)
+{
+    cycles += static_cast<size_t>(cycle);
+    if (cycles >= 341)
+    {
+        cycles -= 341;
+        scanline += 1;
 
+        if (scanline >= 262)
+        {
+            scanline = 0;
+        }
+    }
+    return false;
+}
+void NesPPU::write_to_oam_addr(uint8_t value)
+{
+    oam_addr = value;
+}
+void NesPPU::write_to_oam_data(uint8_t value)
+{
+    oam_data[oam_addr] = value;
+    ++oam_addr;
+}
+uint8_t NesPPU::read_oam_data()
+{
+    return oam_data[oam_addr];
+}
+
+void NesPPU::write_oam_dma(const std::array<uint8_t, 256> &data)
+{
+    for (const auto &x : data)
+    {
+        oam_data[oam_addr] = x;
+        ++oam_addr;
+    }
+}
 } // namespace EM
