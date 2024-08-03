@@ -11,6 +11,7 @@
 #include <functional>
 #include <vector>
 
+#include "Bus.h"
 #include "OpCode.h"
 
 namespace EM
@@ -39,17 +40,34 @@ enum CpuFlags
     N = (1 << 7), // Negative
 };
 
-class Bus;
+enum class InterruptType
+{
+    NMI,
+};
+
+class Interrupt
+{
+  public:
+    InterruptType itype;
+    uint16_t vector_addr;
+    uint8_t b_flag_mask;
+    uint8_t cpu_cycles;
+
+    Interrupt(InterruptType type, uint16_t addr, uint8_t mask, uint8_t cycles)
+        : itype(type), vector_addr(addr), b_flag_mask(mask), cpu_cycles(cycles)
+    {
+    }
+};
 
 class CPU
 {
   public:
     CPU();
-    CPU(Bus *bus);
+    CPU(EM::Bus *bus);
     ~CPU();
 
-    // Registers
-    Registers registers;
+    // egisters
+    EM::Registers registers;
 
     // Opcode map
     const std::unordered_map<uint8_t, std::shared_ptr<OpCode>> &opcode_map =
@@ -60,7 +78,7 @@ class CPU
     EM::Bus *bus = nullptr;
 
     // Connect with bus
-    void connect_bus(Bus *b)
+    void connect_bus(EM::Bus *b)
     {
         bus = b;
     }
@@ -77,11 +95,12 @@ class CPU
     void load_and_run(std::vector<uint8_t> program);
     void run();
     void run_with_callback(std::function<void(CPU &)> callback);
+    void interrupt(Interrupt i);
 
   private:
     // Get and update flag
-    bool get_flag(CpuFlags f);
-    void set_flag(CpuFlags f, bool v);
+    bool get_flag(EM::CpuFlags f);
+    void set_flag(EM::CpuFlags f, bool v);
     void update_zero_and_negative_flags(const uint8_t result);
     void update_negative_flags(const uint8_t result);
 

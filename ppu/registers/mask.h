@@ -1,3 +1,6 @@
+#ifndef MYNESEMULATOR__MASK_H_
+#define MYNESEMULATOR__MASK_H_
+
 #include <cstdint>
 #include <vector>
 namespace EM
@@ -44,3 +47,4 @@ class MaskRegister
 };
 
 } // namespace EM
+#endif

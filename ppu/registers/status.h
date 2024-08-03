@@ -1,3 +1,6 @@
+#ifndef MYNESEMULATOR__STATUS_H_
+#define MYNESEMULATOR__STATUS_H_
+
 #include <cstdint>
 namespace EM
 {
@@ -34,3 +37,4 @@ class StatusRegister
     bool contains(uint8_t flag) const;
 };
 } // namespace EM
+#endif

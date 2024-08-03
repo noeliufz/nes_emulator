@@ -19,6 +19,9 @@
 
 namespace EM
 {
+// Define the NMI interrupt as a constant instance of Interrupt
+const Interrupt NMI(InterruptType::NMI, 0xfffa, 0b00100000, 2);
+
 ///////////////////////////////////////////////////////////////////////////////
 // Constructor
 CPU::CPU()
@@ -89,7 +92,7 @@ void CPU::reset()
 void CPU::load(std::vector<uint8_t> program)
 {
     std::memcpy((bus->ram).data() + 0x0600, program.data(), program.size());
-    write_u16(0xFFFC, 0x0600);
+    // write_u16(0xFFFC, 0x0600);
 }
 
 void CPU::load_and_run(std::vector<uint8_t> program)
@@ -97,6 +100,22 @@ void CPU::load_and_run(std::vector<uint8_t> program)
     load(program);
     reset();
     run();
+}
+
+void CPU::interrupt(Interrupt i)
+{
+    stack_push_u16(registers.pc);
+
+    auto flag = registers.p;
+    set_flag(B, ((i.b_flag_mask & 0b010000) == 1));
+    set_flag(U, ((i.b_flag_mask & 0b100000) == 1));
+
+    stack_push(flag);
+
+    set_flag(I, true);
+
+    bus->tick(i.cpu_cycles);
+    registers.pc = read_u16(i.vector_addr);
 }
 
 void CPU::run()
@@ -109,6 +128,14 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
     uint8_t data0x10 = read(0x10);
     while (true)
     {
+
+        if (auto nmi = bus->poll_nmi_status(); nmi.has_value())
+        {
+            interrupt(NMI);
+        }
+
+        callback(*this);
+
         auto code = read(registers.pc);
         ++registers.pc;
         auto state = registers.pc;
@@ -915,12 +942,12 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             // todo
         }
 
+        bus->tick(op->cycles);
+
         if (state == registers.pc)
         {
             registers.pc += static_cast<uint16_t>((op->len - 1));
         }
-
-        callback(*this);
     }
 }
 

@@ -14,7 +14,12 @@ void EM::NesPPU::write_to_ppu_addr(uint8_t value)
 }
 void EM::NesPPU::write_to_ctrl(uint8_t value)
 {
+    auto before_nmi_status = ctrl.generate_vblank_nmi();
     ctrl.update(value);
+    if (!before_nmi_status && ctrl.generate_vblank_nmi() && status.is_in_vblank())
+    {
+        nmi_interrupt = 1;
+    }
 }
 void EM::NesPPU::write_to_data(uint8_t data)
 {
@@ -121,9 +126,22 @@ bool EM::NesPPU::tick(uint8_t cycle)
         cycles -= 341;
         scanline += 1;
 
+        if (scanline == 241)
+        {
+            status.set_vblank_status(true);
+            status.set_sprite_zero_hit(false);
+            if (ctrl.generate_vblank_nmi())
+            {
+                nmi_interrupt = 1;
+            }
+        }
         if (scanline >= 262)
         {
             scanline = 0;
+            nmi_interrupt = std::nullopt;
+            status.set_sprite_zero_hit(false);
+            status.reset_vblank_status();
+            return true;
         }
     }
     return false;
@@ -150,4 +168,15 @@ void NesPPU::write_oam_dma(const std::array<uint8_t, 256> &data)
         ++oam_addr;
     }
 }
+
+void NesPPU::write_to_mask(uint8_t value)
+{
+    mask.update(value);
+}
+
+void NesPPU::write_to_scroll(uint8_t value)
+{
+    scroll.write(value);
+}
+
 } // namespace EM

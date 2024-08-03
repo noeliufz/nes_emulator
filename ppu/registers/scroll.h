@@ -1,3 +1,6 @@
+#ifndef MYNESEMULATOR__SCROLL_H_
+#define MYNESEMULATOR__SCROLL_H_
+
 #include <cstdint>
 namespace EM
 {
@@ -20,3 +23,4 @@ class ScrollRegister
     void reset_latch();
 };
 } // namespace EM
+#endif

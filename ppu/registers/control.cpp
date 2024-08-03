@@ -24,12 +24,12 @@ uint8_t EM::ControlRegister::vram_addr_increment()
     return (bits & VRAM_ADD_INCREMENT) ? 32 : 1;
 }
 
-uint16_t EM::ControlRegister::sprt_pattern_addr()
+uint16_t EM::ControlRegister::sprt_pattern_addr() const
 {
     return (bits & SPRITE_PATTERN_ADDR) ? 0x1000 : 0;
 }
 
-uint16_t EM::ControlRegister::bknd_pattern_addr()
+uint16_t EM::ControlRegister::bknd_pattern_addr() const
 {
     return (bits & BACKGROUND_PATTERN_ADDR) ? 0x1000 : 0;
 }

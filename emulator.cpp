@@ -1,8 +1,13 @@
 #include "Bus.h"
 #include "CPU.h"
+#include "render/frame.h"
+#include "render/render.h"
 #include "trace.h"
+
 #include <SDL.h>
+#include <SDL_events.h>
 #include <SDL_pixels.h>
+#include <SDL_render.h>
 #include <arm_neon.h>
 #include <cassert>
 #include <cstdint>
@@ -10,8 +15,8 @@
 #include <iostream>
 #include <ostream>
 #include <random>
-#include <thread>
 #include <vector>
+
 SDL_Colour get_color(uint8_t byte)
 {
     switch (byte)
@@ -172,13 +177,10 @@ int main()
     }
 
     // read Nes file
-    std::vector<uint8_t> bytes = readFile("../test.nes");
+    std::vector<uint8_t> bytes = readFile("../game.nes");
     EM::Rom rom(bytes);
 
-    auto bus = EM::Bus(&rom);
-    auto cpu = EM::CPU(&bus);
-    cpu.reset();
-    cpu.registers.pc = 0xC000;
+    EM::Frame frame;
 
     std::vector<uint8_t> screen_state(32 * 3 * 32, 0);
     std::random_device rd;
@@ -187,29 +189,60 @@ int main()
 
     SDL_Event event;
 
-    cpu.run_with_callback([&](EM::CPU &cpu) {
-        std::cout << trace(cpu) << std::endl;
-        // SDL_Event event;
-        // while (SDL_PollEvent(&event))
-        // {
-        // handle_user_input(cpu, event);
-        // }
-        // cpu.write(0xfe, dist(rng));
+    auto bus = EM::Bus(&rom, [&](EM::NesPPU &ppu) {
+        render(ppu, frame);
+        // SDL_UpdateTexture(texture, nullptr, frame.data, 256*3);
+        SDL_UpdateTexture(texture, nullptr, frame.data.data(), 256 * 3);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+        SDL_RenderPresent(renderer);
 
-        // if (read_screen_state(cpu, screen_state))
-        // {
-        //     SDL_UpdateTexture(texture, nullptr, screen_state.data(), 32 * 3);
-        //     SDL_RenderClear(renderer);
-        //     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-        //     SDL_RenderPresent(renderer);
-        // }
-        //
-        // std::this_thread::sleep_for(std::chrono::nanoseconds(70'000));
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_ESCAPE)
+                {
+                    std::exit(0);
+                }
+                break;
+            default:
+                break;
+            }
+        }
     });
 
+    auto cpu = EM::CPU(&bus);
+    cpu.reset();
+    // cpu.registers.pc = 0xC000;
+
+    // cpu.run_with_callback([&](EM::CPU &cpu) {
+    // std::cout << trace(cpu) << std::endl;
+    // SDL_Event event;
+    // while (SDL_PollEvent(&event))
+    // {
+    // handle_user_input(cpu, event);
+    // }
+    // cpu.write(0xfe, dist(rng));
+
+    // if (read_screen_state(cpu, screen_state))
+    // {
+    //     SDL_UpdateTexture(texture, nullptr, screen_state.data(), 32 * 3);
+    //     SDL_RenderClear(renderer);
+    //     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+    //     SDL_RenderPresent(renderer);
+    // }
+    //
+    // std::this_thread::sleep_for(std::chrono::nanoseconds(70'000));
+    // });
+
+    cpu.run();
+
     // clear resources
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    // SDL_DestroyTexture(texture);
+    // SDL_DestroyRenderer(renderer);
+    // SDL_DestroyWindow(window);
+    // SDL_Quit();
 }

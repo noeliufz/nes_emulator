@@ -54,6 +54,26 @@ void Bus::write(uint16_t addr, uint8_t data)
     {
         ppu->write_to_ctrl(data);
     }
+    else if (addr == 0x2001)
+    {
+        ppu->write_to_mask(data);
+    }
+    else if (addr == 0x2002)
+    {
+        throw std::runtime_error("attemp to write to PPU status register");
+    }
+    else if (addr == 0x2003)
+    {
+        ppu->write_to_oam_addr(data);
+    }
+    else if (addr == 0x2004)
+    {
+        ppu->write_to_oam_data(data);
+    }
+    else if (addr == 0x2005)
+    {
+        ppu->write_to_scroll(data);
+    }
     else if (addr == 0x2006)
     {
         ppu->write_to_ppu_addr(data);
@@ -61,6 +81,29 @@ void Bus::write(uint16_t addr, uint8_t data)
     else if (addr == 0x2007)
     {
         ppu->write_to_data(data);
+    }
+    else if (addr >= 0x4000 && addr <= 0x4013 || addr == 0x4015)
+    {
+        // ignore APU
+    }
+    else if (addr == 0x4016)
+    {
+        // ignore joypad 1;
+    }
+    else if (addr == 0x4017)
+    {
+        // ignore joypad 2;
+    }
+    else if (addr == 0x4014)
+    {
+        std::array<uint8_t, 256> buffer = {};
+        uint16_t hi = static_cast<uint16_t>(data) << 8;
+        for (uint16_t i = 0; i < 256; ++i)
+        {
+            buffer[i] = read(hi + i);
+        }
+
+        ppu->write_oam_dma(buffer);
     }
     else if (addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END)
     {
@@ -86,17 +129,45 @@ uint8_t Bus::read(uint16_t addr)
     if (addr >= RAM && addr <= RAM_MIRRORS_END)
     {
         uint16_t mirror_down_addr = addr & 0b00000111'11111111;
-        return ram[static_cast<size_t>(mirror_down_addr)];
+        return ram[mirror_down_addr];
     }
     else if (addr == 0x2000 || addr == 0x2001 || addr == 0x2003 || addr == 0x2005 || addr == 0x2006 || addr == 0x4014)
     {
-        std::cerr << "Attempt to read from write-only PPU address 0x" << std::hex << addr << std::endl;
+        // std::cerr << "Attempt to read from write-only PPU address 0x" << std::hex << addr << std::endl;
         return 0;
+    }
+    else if (addr == 0x2002)
+    {
+        return ppu->read_status();
+    }
+    else if (addr == 0x2004)
+    {
+        return ppu->read_oam_data();
     }
     else if (addr == 0x2007)
     {
         return ppu->read_data();
     }
+    else if (addr == 0x2007)
+    {
+        return ppu->read_data();
+    }
+    else if (addr >= 0x4000 && addr <= 4015)
+    {
+        // ignore APU
+        return 0;
+    }
+    else if (addr == 0x4016)
+    {
+        // ignore joypad 1
+        return 0;
+    }
+    else if (addr == 0x4017)
+    {
+        // ignore joypad 2
+        return 0;
+    }
+
     else if (addr >= 0x2008 && addr <= PPU_REGISTERS_MIRRORS_END)
     {
         uint16_t mirror_down_addr = addr & 0b00100000'00000111;
@@ -129,5 +200,18 @@ uint8_t Bus::read_prg_rom(uint16_t addr)
 void Bus::tick(uint8_t cycle)
 {
     cycles += static_cast<size_t>(cycle);
+    bool nmi_before = ppu->nmi_interrupt.has_value();
+    ppu->tick(cycles * 3);
+    bool nmi_after = ppu->nmi_interrupt.has_value();
+
+    if (!nmi_before && nmi_after)
+    {
+        gameloop_callback(*ppu);
+    }
+}
+
+std::optional<uint8_t> Bus::poll_nmi_status()
+{
+    return ppu->nmi_interrupt;
 }
 } // namespace EM

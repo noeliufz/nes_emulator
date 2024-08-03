@@ -1,3 +1,6 @@
+#ifndef MYNESEMULATOR__ADDR_H_
+#define MYNESEMULATOR__ADDR_H_
+
 #include <cstdint>
 #include <utility>
 
@@ -18,3 +21,5 @@ class AddrRegister
     void reset_latch();
 };
 } // namespace EM
+
+#endif

@@ -25,9 +25,17 @@ endif()
 # 包含SDL2头文件
 include_directories(${SDL2_INCLUDE_DIRS})
 
-file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/ppu/*.cpp")
+file(GLOB_RECURSE PPU_SOURCES "${CMAKE_SOURCE_DIR}/ppu/*.cpp")
+file(GLOB_RECURSE RENDER_SOURCES "${CMAKE_SOURCE_DIR}/render/*.cpp")
+
 set(TESTPPU_FILE "${CMAKE_SOURCE_DIR}/ppu/testppu.cpp")
+
+# 首先将所有源文件添加到 SOURCES 列表中
+list(APPEND SOURCES ${PPU_SOURCES} ${RENDER_SOURCES})
+
+# 从 SOURCES 列表中移除 TESTPPU_FILE
 list(REMOVE_ITEM SOURCES ${TESTPPU_FILE})
+
 
 add_executable(rom_test
     cartridge.h
@@ -45,3 +53,21 @@ add_executable(rom_test
 )
 
 target_link_libraries(rom_test ${SDL2_LIBRARIES})
+
+
+add_executable(emulator
+    cartridge.h
+    cartridge.cpp
+    emulator.cpp
+    trace.h
+    trace.cpp
+    CPU.h
+    Bus.cpp
+    Bus.h
+    CPU.cpp
+    Opcode.h
+    Opcode.cpp
+    ${SOURCES}
+)
+
+target_link_libraries(emulator ${SDL2_LIBRARIES})

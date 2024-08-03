@@ -8,9 +8,10 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <optional>
 
-#include "CPU.h"
 #include "cartridge.h"
 
 #include "ppu/ppu.h"
@@ -35,13 +36,32 @@ class Bus
 
     std::unique_ptr<NesPPU> ppu;
 
+    std::function<void(NesPPU &)> gameloop_callback;
+    template <typename F> Bus(Rom *rom, F gameloop_callback);
+
     // Read & write from & to the bus
     void write(uint16_t addr, uint8_t data);
     uint8_t read(uint16_t addr);
     uint8_t read_prg_rom(uint16_t addr);
 
     void tick(uint8_t cycle);
+    std::optional<uint8_t> poll_nmi_status();
 };
-} // namespace EM
+template <typename F> EM::Bus::Bus(Rom *rom, F gameloop_callback)
+{
+    // clear content of RAM
+    for (auto &i : ram)
+    {
+        i = 0x00;
+    };
 
+    this->rom = rom;
+
+    cycles = 0;
+
+    ppu = std::make_unique<NesPPU>(this->rom->chr_rom, this->rom->screen_mirroring);
+
+    gameloop_callback(*ppu);
+}
+} // namespace EM
 #endif // MYNESEMULATOR__BUS_H_

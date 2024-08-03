@@ -1,3 +1,6 @@
+#ifndef MYNESEMULATOR__CONTROL_H_
+#define MYNESEMULATOR__CONTROL_H_
+
 #include <cstdint>
 namespace EM
 {
@@ -22,8 +25,8 @@ class ControlRegister
 
     uint16_t nametable_addr();
     uint8_t vram_addr_increment();
-    uint16_t sprt_pattern_addr();
-    uint16_t bknd_pattern_addr();
+    uint16_t sprt_pattern_addr() const;
+    uint16_t bknd_pattern_addr() const;
     uint8_t sprite_size();
     uint8_t master_slave_select();
     bool generate_vblank_nmi();
@@ -33,3 +36,4 @@ class ControlRegister
     uint8_t bits;
 };
 } // namespace EM
+#endif
