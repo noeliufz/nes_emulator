@@ -135,7 +135,7 @@ int main()
 
     // create window
     SDL_Window *window =
-        SDL_CreateWindow("Snake game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 320, SDL_WINDOW_SHOWN);
+        SDL_CreateWindow("Nes emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 256*3, 240*3, SDL_WINDOW_SHOWN);
     if (window == nullptr)
     {
         std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
@@ -156,7 +156,7 @@ int main()
     }
 
     // set scale
-    if (SDL_RenderSetScale(renderer, 10.0f, 10.0f) != 0)
+    if (SDL_RenderSetScale(renderer, 3.0f, 3.0f) != 0)
     {
         std::cerr << "SDL_RenderSetScale Error: " << SDL_GetError() << std::endl;
         SDL_DestroyRenderer(renderer);
@@ -166,7 +166,7 @@ int main()
     }
 
     // create texture
-    SDL_Texture *texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, 32, 32);
+    SDL_Texture *texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB24, SDL_TEXTUREACCESS_TARGET, 256, 240);
     if (texture == nullptr)
     {
         std::cerr << "SDL_CreateTexture Error: " << SDL_GetError() << std::endl;
@@ -188,61 +188,33 @@ int main()
     std::uniform_int_distribution<int> dist(1, 15);
 
     SDL_Event event;
+  auto gameloop_callback = [&](EM::NesPPU &ppu) {
+    render(ppu, frame);
+    SDL_UpdateTexture(texture, nullptr, frame.data.data(), 256 * 3);
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+    SDL_RenderPresent(renderer);
 
-    auto bus = EM::Bus(&rom, [&](EM::NesPPU &ppu) {
-        render(ppu, frame);
-        // SDL_UpdateTexture(texture, nullptr, frame.data, 256*3);
-        SDL_UpdateTexture(texture, nullptr, frame.data.data(), 256 * 3);
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-        SDL_RenderPresent(renderer);
+    while (SDL_PollEvent(&event))
+    {
+      switch (event.type)
+      {
+        case SDL_QUIT:
+        case SDL_KEYDOWN:
+          if (event.key.keysym.sym == SDLK_ESCAPE)
+          {
+            std::exit(0);
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  };
 
-        while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-            {
-            case SDL_QUIT:
-            case SDL_KEYDOWN:
-                if (event.key.keysym.sym == SDLK_ESCAPE)
-                {
-                    std::exit(0);
-                }
-                break;
-            default:
-                break;
-            }
-        }
-    });
+    auto bus = EM::Bus(&rom, gameloop_callback);
 
     auto cpu = EM::CPU(&bus);
     cpu.reset();
-    // cpu.registers.pc = 0xC000;
-
-    // cpu.run_with_callback([&](EM::CPU &cpu) {
-    // std::cout << trace(cpu) << std::endl;
-    // SDL_Event event;
-    // while (SDL_PollEvent(&event))
-    // {
-    // handle_user_input(cpu, event);
-    // }
-    // cpu.write(0xfe, dist(rng));
-
-    // if (read_screen_state(cpu, screen_state))
-    // {
-    //     SDL_UpdateTexture(texture, nullptr, screen_state.data(), 32 * 3);
-    //     SDL_RenderClear(renderer);
-    //     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-    //     SDL_RenderPresent(renderer);
-    // }
-    //
-    // std::this_thread::sleep_for(std::chrono::nanoseconds(70'000));
-    // });
-
     cpu.run();
-
-    // clear resources
-    // SDL_DestroyTexture(texture);
-    // SDL_DestroyRenderer(renderer);
-    // SDL_DestroyWindow(window);
-    // SDL_Quit();
 }

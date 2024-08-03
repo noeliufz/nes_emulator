@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
+#include <iostream>
 namespace EM
 {
 std::array<uint8_t, 4> bg_palette(const NesPPU &ppu, size_t tile_column, size_t tile_row)
@@ -35,12 +36,12 @@ std::array<uint8_t, 4> bg_palette(const NesPPU &ppu, size_t tile_column, size_t 
         throw std::runtime_error("should not happen");
     }
 
-    size_t palette_start = 1 + palette_idx * 4;
+    size_t palette_start = 1 + static_cast<std::size_t>(palette_idx) * 4;
     return {
         ppu.palette_table[0],
         ppu.palette_table[palette_start],
         ppu.palette_table[palette_start + 1],
-        ppu.palette_table[palette_start + 1],
+        ppu.palette_table[palette_start + 2],
     };
 }
 
@@ -61,10 +62,16 @@ void render(const NesPPU &ppu, Frame &frame)
 
     for (auto i = 0; i < 0x3c0; ++i)
     {
-        uint16_t tile = ppu.vram[i];
+        auto tile = static_cast<uint16_t>(ppu.vram[i]);
         size_t tile_column = i % 32;
         size_t tile_row = i / 32;
-        const auto tile_data = &ppu.chr_rom[(bank + tile * 16)];
+        auto tile_start = ppu.chr_rom.begin() + (bank + tile * 16);
+        auto tile_end = ppu.chr_rom.begin() + (bank + tile*16+16);
+
+        const std::vector<uint8_t> tile_data(tile_start, tile_end);
+
+        std::cout << tile << std::endl;
+
         auto palette = bg_palette(ppu, tile_column, tile_row);
 
         for (auto y = 0; y <= 7; ++y)
@@ -72,12 +79,12 @@ void render(const NesPPU &ppu, Frame &frame)
             auto upper = tile_data[y];
             auto lower = tile_data[y + 8];
 
-            std::tuple<uint8_t, uint8_t, uint8_t> rgb;
-            for (auto x = 7; x >= 0; --x)
+            for (int x = 7; x >= 0; --x)
             {
-                auto value = (1 & lower) << 1 | (1 & upper);
+                auto value = ((1 & lower) << 1) | (1 & upper);
                 upper >>= 1;
                 lower >>= 1;
+                std::tuple<uint8_t, uint8_t, uint8_t> rgb;
                 switch (value)
                 {
                 case 0: {
@@ -99,12 +106,13 @@ void render(const NesPPU &ppu, Frame &frame)
                 default:
                     throw std::runtime_error("cannot be");
                 }
-                frame.set_pixel(tile_column * 8, tile_row * 8, rgb);
+
+                frame.set_pixel(tile_column * 8 + x, tile_row * 8 + y, rgb);
             }
         }
     }
 
-    for (size_t i = ppu.oam_data.size(); i > 0; i -= 4)
+    for (int i = ppu.oam_data.size() - 1; i >= 0; i = i - 4)
     {
         uint16_t tile_idx = ppu.oam_data[i + 1];
         size_t tile_x = ppu.oam_data[i + 3];
@@ -117,7 +125,11 @@ void render(const NesPPU &ppu, Frame &frame)
         auto sp = sprite_palette(ppu, palette_idx);
         uint16_t bank = ppu.ctrl.sprt_pattern_addr();
 
-        const auto tile_data = &ppu.chr_rom[(bank + tile_idx * 16)];
+        auto tile_start = ppu.chr_rom.begin() + bank + tile_idx * 16;
+        auto tile_end = ppu.chr_rom.begin() + bank + tile_idx * 16 + 16;
+
+        std::vector<uint8_t> tile_data(tile_start, tile_end);
+//        const auto tile_data = &ppu.chr_rom[(bank + tile_idx * 16)];
 
         for (int y = 0; y <= 7; ++y)
         {

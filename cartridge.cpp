@@ -1,4 +1,5 @@
 #include "cartridge.h"
+#include <iostream>
 namespace EM
 {
 Rom::Rom()
@@ -47,10 +48,15 @@ Rom::Rom(const std::vector<uint8_t> &raw)
     size_t prg_rom_start = 16 + (skip_trainer ? 512 : 0);
     size_t chr_rom_start = prg_rom_start + prg_rom_size;
 
-    if (raw.size() < chr_rom_start + chr_rom_size)
+    std::cout << chr_rom_start << std::endl;
+    std::cout << chr_rom_size << std::endl;
+    std::cout << raw.size() << std::endl;
+
+    if (raw.size() < chr_rom_start + chr_rom_size || raw.size() < prg_rom_start + prg_rom_size)
     {
         throw std::invalid_argument("File is too small for specified PRG and CHR ROM sizes");
     }
+
 
     prg_rom.assign(raw.begin() + prg_rom_start, raw.begin() + prg_rom_start + prg_rom_size);
     chr_rom.assign(raw.begin() + chr_rom_start, raw.begin() + chr_rom_start + chr_rom_size);

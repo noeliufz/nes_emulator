@@ -28,7 +28,7 @@ void EM::NesPPU::write_to_data(uint8_t data)
     {
         std::cerr << "attempt to write to chr rom space" << std::endl;
     }
-    else if (addr >= 0x2000 && addr < 0x2fff)
+    else if (addr >= 0x2000 && addr <= 0x2fff)
     {
         vram[mirror_vram_addr(addr)] = data;
     }
@@ -101,9 +101,9 @@ uint8_t EM::NesPPU::read_data()
 }
 uint16_t EM::NesPPU::mirror_vram_addr(uint16_t addr)
 {
-    auto mirrored_vram = addr & 0b10111111111111;
-    auto vram_index = mirrored_vram - 0x2000;
-    auto name_table = vram_index / 0x400;
+    uint16_t mirrored_vram = addr & 0b10111111111111;
+    uint16_t vram_index = mirrored_vram - 0x2000;
+    uint16_t name_table = vram_index / 0x400;
     if ((mirroring == Mirroring::VERTICAL && (name_table == 2 || name_table == 3)) ||
         (mirroring == Mirroring::HORIZONTAL && name_table == 3))
     {

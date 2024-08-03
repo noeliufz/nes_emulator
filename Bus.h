@@ -36,7 +36,7 @@ class Bus
 
     std::unique_ptr<NesPPU> ppu;
 
-    std::function<void(NesPPU &)> gameloop_callback;
+    std::function<void(NesPPU&)> gameloop_callback;
     template <typename F> Bus(Rom *rom, F gameloop_callback);
 
     // Read & write from & to the bus
@@ -49,13 +49,14 @@ class Bus
 };
 // Template constructor implementation
 template <typename F>
-Bus::Bus(Rom *rom, F gameloop_callback) : rom(rom), gameloop_callback(gameloop_callback), cycles(0)
+Bus::Bus(Rom *rom, F gameloop_callback): gameloop_callback(gameloop_callback)
 {
+    this->rom = rom;
+    cycles = 0;
     // Initialize RAM to zero
     std::fill(ram.begin(), ram.end(), 0x00);
-
     // Initialize PPU with ROM data
-    ppu = std::make_unique<NesPPU>(this->rom->chr_rom, this->rom->screen_mirroring);
+    ppu = std::make_unique<NesPPU>(rom->chr_rom, rom->screen_mirroring);
 }
 } // namespace EM
 #endif // MYNESEMULATOR__BUS_H_

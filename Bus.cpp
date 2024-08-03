@@ -48,7 +48,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     if (addr >= RAM && addr <= RAM_MIRRORS_END)
     {
         uint16_t mirror_down_addr = addr & 0b00000111'11111111;
-        ram[static_cast<size_t>(mirror_down_addr)] = data;
+        ram[mirror_down_addr] = data;
     }
     else if (addr == 0x2000)
     {
@@ -96,7 +96,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else if (addr == 0x4014)
     {
-        std::array<uint8_t, 256> buffer = {};
+        std::array<uint8_t, 256> buffer = {0};
         uint16_t hi = static_cast<uint16_t>(data) << 8;
         for (uint16_t i = 0; i < 256; ++i)
         {
@@ -179,7 +179,6 @@ uint8_t Bus::read(uint16_t addr)
     }
     else
     {
-        std::cout << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
         std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
         return 0;
     }
@@ -194,26 +193,20 @@ uint8_t Bus::read_prg_rom(uint16_t addr)
         // mirror if needed
         addr = addr % 0x4000;
     }
-    return rom->prg_rom[static_cast<size_t>(addr)];
+    return rom->prg_rom[addr];
 }
 
 void Bus::tick(uint8_t cycle)
 {
-    cycles += static_cast<size_t>(cycle);
-    bool nmi_before = ppu->nmi_interrupt.has_value();
-    ppu->tick(cycles * 3);
-    bool nmi_after = ppu->nmi_interrupt.has_value();
+    cycles += cycle;
+    auto new_frame = ppu->tick(cycles * 3);
 
-    if (!nmi_before && nmi_after)
-    {
-        if (gameloop_callback)
-        {
-            gameloop_callback(*ppu); // Call the callback only if it's initialized
-        }
-        else
-        {
-            throw std::runtime_error("gameloop_callback is not initialized.");
-        }
+    if (new_frame) {
+      if (gameloop_callback) {
+        gameloop_callback(*ppu); // Call the callback only if it's initialized
+      } else {
+        throw std::runtime_error("gameloop_callback is not initialized.");
+      }
     }
 }
 

@@ -1126,15 +1126,12 @@ void CPU::LDA(const AddressingMode &mode)
 {
     auto addr = get_operand_address(mode);
     uint8_t value = read(addr);
-    std::cout << "LDA value 0x" << std::hex << static_cast<int8_t>(value) << " addr: 0x" << addr << std::endl;
     set_register_a(value);
 }
 
 void CPU::STA(const AddressingMode &mode)
 {
     auto addr = get_operand_address(mode);
-    std::cout << "STA addr: 0x" << std::hex << static_cast<int8_t>(addr) << " register a: 0x" << registers.a
-              << std::endl;
     write(addr, registers.a);
 }
 
