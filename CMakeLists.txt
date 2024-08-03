@@ -36,25 +36,25 @@ list(APPEND SOURCES ${PPU_SOURCES} ${RENDER_SOURCES})
 # 从 SOURCES 列表中移除 TESTPPU_FILE
 list(REMOVE_ITEM SOURCES ${TESTPPU_FILE})
 
-
-add_executable(rom_test
-    cartridge.h
-    cartridge.cpp
-    rom_test.cpp
-    trace.h
-    trace.cpp
-    CPU.h
-    Bus.cpp
-    Bus.h
-    CPU.cpp
-    Opcode.h
-    Opcode.cpp
-    ${SOURCES}
-)
-
-target_link_libraries(rom_test ${SDL2_LIBRARIES})
-
-
+#
+# add_executable(rom_test
+#     cartridge.h
+#     cartridge.cpp
+#     rom_test.cpp
+#     trace.h
+#     trace.cpp
+#     CPU.h
+#     Bus.cpp
+#     Bus.h
+#     CPU.cpp
+#     Opcode.h
+#     Opcode.cpp
+#     ${SOURCES}
+# )
+#
+# target_link_libraries(rom_test ${SDL2_LIBRARIES})
+#
+#
 add_executable(emulator
     cartridge.h
     cartridge.cpp

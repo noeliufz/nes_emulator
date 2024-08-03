@@ -23,21 +23,21 @@ Bus::Bus()
     };
     ppu = nullptr;
 }
-
-Bus::Bus(Rom *rom)
-{
-    // clear content of RAM
-    for (auto &i : ram)
-    {
-        i = 0x00;
-    };
-
-    this->rom = rom;
-
-    cycles = 0;
-
-    ppu = std::make_unique<NesPPU>(this->rom->chr_rom, this->rom->screen_mirroring);
-}
+//
+// Bus::Bus(Rom *rom)
+// {
+//     // clear content of RAM
+//     for (auto &i : ram)
+//     {
+//         i = 0x00;
+//     };
+//
+//     this->rom = rom;
+//
+//     cycles = 0;
+//
+//     ppu = std::make_unique<NesPPU>(this->rom->chr_rom, this->rom->screen_mirroring);
+// }
 
 Bus::~Bus() = default;
 
@@ -206,7 +206,14 @@ void Bus::tick(uint8_t cycle)
 
     if (!nmi_before && nmi_after)
     {
-        gameloop_callback(*ppu);
+        if (gameloop_callback)
+        {
+            gameloop_callback(*ppu); // Call the callback only if it's initialized
+        }
+        else
+        {
+            throw std::runtime_error("gameloop_callback is not initialized.");
+        }
     }
 }
 

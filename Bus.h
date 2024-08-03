@@ -27,7 +27,7 @@ class Bus
 {
   public:
     Bus();
-    Bus(Rom *rom);
+    // Bus(Rom *rom);
     ~Bus();
 
     size_t cycles;
@@ -47,21 +47,15 @@ class Bus
     void tick(uint8_t cycle);
     std::optional<uint8_t> poll_nmi_status();
 };
-template <typename F> EM::Bus::Bus(Rom *rom, F gameloop_callback)
+// Template constructor implementation
+template <typename F>
+Bus::Bus(Rom *rom, F gameloop_callback) : rom(rom), gameloop_callback(gameloop_callback), cycles(0)
 {
-    // clear content of RAM
-    for (auto &i : ram)
-    {
-        i = 0x00;
-    };
+    // Initialize RAM to zero
+    std::fill(ram.begin(), ram.end(), 0x00);
 
-    this->rom = rom;
-
-    cycles = 0;
-
+    // Initialize PPU with ROM data
     ppu = std::make_unique<NesPPU>(this->rom->chr_rom, this->rom->screen_mirroring);
-
-    gameloop_callback(*ppu);
 }
 } // namespace EM
 #endif // MYNESEMULATOR__BUS_H_

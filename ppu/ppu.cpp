@@ -120,7 +120,7 @@ uint16_t EM::NesPPU::mirror_vram_addr(uint16_t addr)
 }
 bool EM::NesPPU::tick(uint8_t cycle)
 {
-    cycles += static_cast<size_t>(cycle);
+    cycles += cycle;
     if (cycles >= 341)
     {
         cycles -= 341;
