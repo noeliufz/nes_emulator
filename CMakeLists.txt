@@ -68,6 +68,7 @@ add_executable(emulator
         op_code.h
         op_code.cpp
     ${SOURCES}
+        cpu_run.cpp
 )
 
 target_link_libraries(emulator ${SDL2_LIBRARIES})
@@ -85,6 +86,7 @@ add_executable(tile_test
         op_code.h
         op_code.cpp
     ${SOURCES}
+        cpu_run.cpp
 )
 
 target_link_libraries(tile_test ${SDL2_LIBRARIES})
