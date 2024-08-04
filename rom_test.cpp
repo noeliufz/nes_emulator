@@ -1,5 +1,5 @@
-#include "Bus.h"
-#include "CPU.h"
+#include "bus.h"
+#include "cpu.h"
 #include "trace.h"
 #include <SDL.h>
 #include <SDL_pixels.h>

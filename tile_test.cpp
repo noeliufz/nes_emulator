@@ -1,5 +1,5 @@
-#include "Bus.h"
-#include "CPU.h"
+#include "bus.h"
+#include "cpu.h"
 #include "render/frame.h"
 #include "render/render.h"
 #include "render/palette.h"

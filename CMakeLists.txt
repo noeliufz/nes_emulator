@@ -61,12 +61,12 @@ add_executable(emulator
     emulator.cpp
     trace.h
     trace.cpp
-    CPU.h
-    Bus.cpp
-    Bus.h
-    CPU.cpp
-    Opcode.h
-    Opcode.cpp
+        cpu.h
+        bus.cpp
+        bus.h
+        cpu.cpp
+        op_code.h
+        op_code.cpp
     ${SOURCES}
 )
 
@@ -78,12 +78,12 @@ add_executable(tile_test
     tile_test.cpp
     trace.h
     trace.cpp
-    CPU.h
-    Bus.cpp
-    Bus.h
-    CPU.cpp
-    Opcode.h
-    Opcode.cpp
+        cpu.h
+        bus.cpp
+        bus.h
+        cpu.cpp
+        op_code.h
+        op_code.cpp
     ${SOURCES}
 )
 

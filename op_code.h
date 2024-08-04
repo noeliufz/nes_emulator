@@ -1,5 +1,5 @@
-#ifndef MYNESEMULATOR__OPCODE_H_
-#define MYNESEMULATOR__OPCODE_H_
+#ifndef MYNESEMULATOR__OP_CODE_H_
+#define MYNESEMULATOR__OP_CODE_H_
 
 #include <cstdint>
 #include <memory>

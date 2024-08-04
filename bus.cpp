@@ -2,7 +2,7 @@
 // Created by Fangzhou Liu on 22/11/2023.
 //
 
-#include "Bus.h"
+#include "bus.h"
 #include <cstddef>
 #include <cstdint>
 #include <iostream>

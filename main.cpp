@@ -1,5 +1,5 @@
-#include "Bus.h"
-#include "CPU.h"
+#include "bus.h"
+#include "cpu.h"
 #include <cassert>
 #include <iostream>
 

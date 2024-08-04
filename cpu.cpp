@@ -1,15 +1,15 @@
 //
 // Created by Fangzhou Liu on 22/11/2023.
 //
-#include "CPU.h"
+#include "cpu.h"
 
 #include <arm_neon.h>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
 
-#include "Bus.h"
-#include "OpCode.h"
+#include "bus.h"
+#include "op_code.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>
 #include <pthread.h>
