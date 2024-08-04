@@ -49,6 +49,7 @@ class NesPPU
         oam_addr = 0;
         cycles = 0;
         scanline = 0;
+		internal_data_buf = 0;
         nmi_interrupt = std::nullopt;
     }
 

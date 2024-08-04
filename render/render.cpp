@@ -5,6 +5,8 @@
 #include <iostream>
 namespace EM
 {
+
+
 std::array<uint8_t, 4> bg_palette(const NesPPU &ppu, size_t tile_column, size_t tile_row)
 {
     auto attr_table_idx = tile_row / 4 * 8 + tile_column / 4;
@@ -13,7 +15,7 @@ std::array<uint8_t, 4> bg_palette(const NesPPU &ppu, size_t tile_column, size_t 
     auto i = tile_column % 4 / 2;
     auto j = tile_row % 4 / 2;
 
-    auto palette_idx = attr_byte;
+    size_t palette_idx;
 
     if (i == 0 && j == 0)
     {
@@ -36,7 +38,7 @@ std::array<uint8_t, 4> bg_palette(const NesPPU &ppu, size_t tile_column, size_t 
         throw std::runtime_error("should not happen");
     }
 
-    size_t palette_start = 1 + static_cast<std::size_t>(palette_idx) * 4;
+    size_t palette_start = 1 + palette_idx * 4;
     return {
         ppu.palette_table[0],
         ppu.palette_table[palette_start],
@@ -47,7 +49,7 @@ std::array<uint8_t, 4> bg_palette(const NesPPU &ppu, size_t tile_column, size_t 
 
 std::array<uint8_t, 4> sprite_palette(const NesPPU &ppu, uint8_t palette_idx)
 {
-    size_t start = 0x11 + (palette_idx * 4);
+    size_t start = 0x11 + static_cast<std::size_t>(palette_idx * 4);
     return {
         0,
         ppu.palette_table[start],
@@ -59,18 +61,15 @@ std::array<uint8_t, 4> sprite_palette(const NesPPU &ppu, uint8_t palette_idx)
 void render(const NesPPU &ppu, Frame &frame)
 {
     auto bank = ppu.ctrl.bknd_pattern_addr();
-
     for (auto i = 0; i < 0x3c0; ++i)
     {
         auto tile = static_cast<uint16_t>(ppu.vram[i]);
         size_t tile_column = i % 32;
         size_t tile_row = i / 32;
         auto tile_start = ppu.chr_rom.begin() + (bank + tile * 16);
-        auto tile_end = ppu.chr_rom.begin() + (bank + tile*16+16);
+        auto tile_end = ppu.chr_rom.begin() + (bank + tile * 16 + 16);
 
         const std::vector<uint8_t> tile_data(tile_start, tile_end);
-
-        std::cout << tile << std::endl;
 
         auto palette = bg_palette(ppu, tile_column, tile_row);
 
@@ -112,7 +111,7 @@ void render(const NesPPU &ppu, Frame &frame)
         }
     }
 
-    for (int i = ppu.oam_data.size() - 1; i >= 0; i = i - 4)
+    for (int i = ppu.oam_data.size() - 4; i >= 0; i = i - 4)
     {
         uint16_t tile_idx = ppu.oam_data[i + 1];
         size_t tile_x = ppu.oam_data[i + 3];
@@ -123,7 +122,7 @@ void render(const NesPPU &ppu, Frame &frame)
 
         uint8_t palette_idx = ppu.oam_data[i + 2] & 0b11;
         auto sp = sprite_palette(ppu, palette_idx);
-        uint16_t bank = ppu.ctrl.sprt_pattern_addr();
+        auto bank = ppu.ctrl.sprt_pattern_addr();
 
         auto tile_start = ppu.chr_rom.begin() + bank + tile_idx * 16;
         auto tile_end = ppu.chr_rom.begin() + bank + tile_idx * 16 + 16;
@@ -137,7 +136,7 @@ void render(const NesPPU &ppu, Frame &frame)
             uint8_t lower = tile_data[y + 8];
             for (int x = 7; x >= 0; --x)
             {
-                auto value = (1 & lower) << 1 | (1 & upper);
+                auto value = (lower & 1) << 1 | (upper & 1);
 
                 upper >>= 1;
                 lower >>= 1;
@@ -183,6 +182,7 @@ void render(const NesPPU &ppu, Frame &frame)
                 {
                     frame.set_pixel(tile_x + 7 - x, tile_y + 7 - y, rgb);
                 }
+
             }
         }
     }

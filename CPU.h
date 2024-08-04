@@ -146,9 +146,11 @@ class CPU
     void COMPARE(const AddressingMode &mode, uint8_t compare_with);
     void BRANCH(bool condition);
 
+	bool page_cross(uint16_t addr1, uint16_t addr2);
+
   public:
-    uint16_t get_absolute_address(const AddressingMode &mode, uint16_t addr);
-    uint16_t get_operand_address(const AddressingMode &mode);
+    std::pair<uint16_t, bool> get_absolute_address(const AddressingMode &mode, uint16_t addr);
+    std::pair<uint16_t, bool> get_operand_address(const AddressingMode &mode);
 
   private:
     const uint16_t STACK = 0x0100;

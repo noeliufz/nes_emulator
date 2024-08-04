@@ -42,7 +42,7 @@ std::string trace(EM::CPU &cpu)
         stored_value = 0;
         break;
     default:
-        uint16_t addr = cpu.get_absolute_address(op->mode, begin + 1);
+        auto [addr, _] = cpu.get_absolute_address(op->mode, begin + 1);
         mem_addr = addr;
         mem_addr = cpu.read(addr);
     }

@@ -22,6 +22,11 @@ namespace EM
 // Define the NMI interrupt as a constant instance of Interrupt
 const Interrupt NMI(InterruptType::NMI, 0xfffa, 0b00100000, 2);
 
+bool CPU::page_cross(uint16_t addr1, uint16_t addr2)
+{
+    return ((addr1 & 0xff00) != (addr2 & 0xff00));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Constructor
 CPU::CPU()
@@ -49,7 +54,7 @@ CPU::CPU(Bus *bus)
 
 CPU::~CPU(){};
 
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 // Bus linkage
 uint8_t CPU::read(uint16_t addr) const
 {
@@ -63,8 +68,8 @@ void CPU::write(uint16_t addr, uint8_t data)
 
 uint16_t CPU::read_u16(uint16_t addr) const
 {
-    uint8_t lo = read(addr);
-    uint8_t hi = read(addr + 1);
+    auto lo = static_cast<uint16_t>(read(addr));
+    auto hi = static_cast<uint16_t>(read(addr + 1));
     uint16_t data = (hi << 8) | lo;
     return data;
 }
@@ -107,8 +112,17 @@ void CPU::interrupt(Interrupt i)
     stack_push_u16(registers.pc);
 
     auto flag = registers.p;
-    set_flag(B, ((i.b_flag_mask & 0b010000) == 1));
-    set_flag(U, ((i.b_flag_mask & 0b100000) == 1));
+	auto v = (i.b_flag_mask & 0b010000) == 1;
+	if (v)
+		flag |= B; // set status to true
+	else
+		flag &= ~B; // clear status
+
+	v = (i.b_flag_mask & 0b100000) == 1;
+	if (v)
+		flag |= U; // set status to true
+	else
+		flag &= ~U; // clear status
 
     stack_push(flag);
 
@@ -540,7 +554,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0x86:
         case 0x96:
         case 0x8e: {
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             write(addr, registers.x);
             break;
         }
@@ -548,7 +562,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0x84:
         case 0x94:
         case 0x8c: {
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             write(addr, registers.y);
             break;
         }
@@ -619,11 +633,11 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0xdb:
         case 0xd3:
         case 0xc3: {
-            const auto addr = get_operand_address(op->mode);
+            const auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
             --data;
             write(addr, data);
-            if (data < registers.a)
+            if (data <= registers.a)
             {
                 set_flag(C, true);
             }
@@ -681,7 +695,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
         /* AXS */
         case 0xcb: {
-            const auto addr = get_operand_address(op->mode);
+            const auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
             auto x_and_a = registers.x & registers.a;
             auto result = x_and_a - data;
@@ -698,7 +712,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
         /* ARR */
         case 0x6b: {
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
             set_register_a(data & registers.a);
             ror_accumulator();
@@ -732,7 +746,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
         /* Unofficial SBC */
         case 0xeb: {
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
             // not sure
             sub_from_register_a(data);
@@ -742,7 +756,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         /* ANC */
         case 0x0b:
         case 0x2b: {
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
             set_register_a(data & registers.a);
             if (get_flag(N))
@@ -758,7 +772,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
         /* ALR */
         case 0x4b: {
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
             set_register_a(data & registers.a);
             lsr_accumulator();
@@ -782,9 +796,13 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0x7c:
         case 0xdc:
         case 0xfc: {
-            auto addr = get_operand_address(op->mode);
+            auto [addr, page_cross] = get_operand_address(op->mode);
             auto data = read(addr);
             /* do nothing */
+            if (page_cross)
+            {
+                bus->tick(1);
+            }
             break;
         }
 
@@ -846,7 +864,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0xbf:
         case 0xa3:
         case 0xb3: {
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
             set_register_a(data);
             registers.x = registers.a;
@@ -859,7 +877,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0x8f:
         case 0x83: {
             auto data = registers.a & registers.x;
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             write(addr, data);
             break;
         }
@@ -875,7 +893,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0x8b: {
             registers.a = registers.x;
             update_zero_and_negative_flags(registers.a);
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
             set_register_a(data & registers.a);
             break;
@@ -883,7 +901,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
         /* LAS */
         case 0xbb: {
-            auto addr = get_operand_address(op->mode);
+            auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
             data = data & registers.sp;
             registers.a = data;
@@ -895,9 +913,9 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
         /* TAS */
         case 0x9b: {
-            auto data = registers.a & registers.x;
+            uint8_t data = registers.a & registers.x;
             registers.sp = data;
-            auto mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.y);
+            uint16_t mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.y);
             data = (static_cast<uint8_t>(mem_addr >> 8) + 1) & registers.sp;
             write(mem_addr, data);
             break;
@@ -906,8 +924,8 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         /* AHX Indirect Y */
         case 0x93: {
             auto pos = read(registers.pc);
-            auto mem_addr = read_u16(static_cast<uint16_t>(pos)) + static_cast<uint16_t>(registers.y);
-            auto data = registers.a & registers.x & static_cast<uint8_t>(mem_addr >> 8);
+            uint16_t mem_addr = read_u16(static_cast<uint16_t>(pos)) + static_cast<uint16_t>(registers.y);
+            uint8_t data = registers.a & registers.x & static_cast<uint8_t>(mem_addr >> 8);
             write(mem_addr, data);
             break;
         }
@@ -915,23 +933,23 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         /* AHX Absolute Y */
         case 0x9f: {
             auto mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.y);
-            auto data = registers.a & registers.x & static_cast<uint8_t>(mem_addr >> 8);
+            uint8_t data = registers.a & registers.x & static_cast<uint8_t>(mem_addr >> 8);
             write(mem_addr, data);
             break;
         }
 
         /* SHX */
         case 0x9e: {
-            auto mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.y);
-            auto data = registers.x & (static_cast<uint8_t>(mem_addr >> 8) + 1);
+            uint16_t mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.y);
+            uint8_t data = registers.x & (static_cast<uint8_t>(mem_addr >> 8) + 1);
             write(mem_addr, data);
             break;
         }
 
         /* SHY */
         case 0x9c: {
-            auto mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.x);
-            auto data = registers.y & (static_cast<uint8_t>(mem_addr >> 8) + 1);
+            uint16_t mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.x);
+            uint8_t data = registers.y & (static_cast<uint8_t>(mem_addr >> 8) + 1);
             write(mem_addr, data);
             break;
         }
@@ -979,38 +997,38 @@ void CPU::update_negative_flags(const uint8_t result)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Get operand address in different addressing mode
-uint16_t CPU::get_absolute_address(const AddressingMode &mode, uint16_t addr)
+std::pair<uint16_t, bool> CPU::get_absolute_address(const AddressingMode &mode, uint16_t addr)
 {
     switch (mode)
     {
     case ZeroPage:
-        return static_cast<uint16_t>(read(registers.pc));
+        return {static_cast<uint16_t>(read(registers.pc)), false};
 
     case Absolute:
-        return read_u16(registers.pc);
+        return {read_u16(registers.pc), false};
 
     case ZeroPage_X: {
-        uint16_t pos = static_cast<uint16_t>(read(registers.pc));
+        auto pos = static_cast<uint16_t>(read(registers.pc));
         // wrapping add
-        uint16_t addr = pos + static_cast<uint16_t>(registers.x);
-        return addr;
+        uint16_t addr_new = pos + static_cast<uint16_t>(registers.x);
+        return {addr_new, false};
     }
     case ZeroPage_Y: {
-        uint16_t pos = static_cast<uint16_t>(read(registers.pc));
+        auto pos = static_cast<uint16_t>(read(registers.pc));
         // wrapping add
-        uint16_t addr = pos + static_cast<uint16_t>(registers.y);
-        return addr;
+        uint16_t addr_new = pos + static_cast<uint16_t>(registers.y);
+        return {addr_new, false};
     }
 
     case Absolute_X: {
         auto base = read_u16(registers.pc);
-        uint16_t addr = base + static_cast<uint16_t>(registers.x);
-        return addr;
+        uint16_t addr_new = base + static_cast<uint16_t>(registers.x);
+        return {addr_new, page_cross(base, addr_new)};
     }
     case Absolute_Y: {
         auto base = read_u16(registers.pc);
-        uint16_t addr = base + static_cast<uint16_t>(registers.y);
-        return addr;
+        uint16_t addr_new = base + static_cast<uint16_t>(registers.y);
+        return {addr_new, page_cross(base, addr_new)};
     }
 
     case Indirect_X: {
@@ -1018,7 +1036,7 @@ uint16_t CPU::get_absolute_address(const AddressingMode &mode, uint16_t addr)
         uint8_t ptr = base + registers.x;
         auto lo = read(static_cast<uint16_t>(ptr));
         auto hi = read(static_cast<uint16_t>((ptr + 1)));
-        return static_cast<uint16_t>((static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo))));
+        return {static_cast<uint16_t>((static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)))), false};
     }
     case Indirect_Y: {
         auto base = read(registers.pc);
@@ -1026,23 +1044,21 @@ uint16_t CPU::get_absolute_address(const AddressingMode &mode, uint16_t addr)
         auto hi = read(static_cast<uint16_t>((base + 1)));
         auto deref_base = (static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)));
         auto deref = deref_base + (static_cast<uint16_t>(registers.y));
-        return deref;
+        return {deref, page_cross(deref, deref_base)};
     }
 
     default: {
         throw std::runtime_error("Unknown supported");
     }
     }
-
-    return 0; // todo
 }
 
-uint16_t CPU::get_operand_address(const AddressingMode &mode)
+std::pair<uint16_t, bool> CPU::get_operand_address(const AddressingMode &mode)
 {
     switch (mode)
     {
     case Immediate:
-        return registers.pc;
+        return {registers.pc, false};
     default:
         return get_absolute_address(mode, registers.pc);
     }
@@ -1065,10 +1081,10 @@ void CPU::add_to_register_a(uint8_t data)
     // Set carry flag
     set_flag(C, sum > 0xFF);
 
-    uint8_t result = static_cast<uint8_t>(sum & 0xFF);
+    uint8_t result = static_cast<uint8_t>(sum);
 
     // Set overflow flag
-    set_flag(V, ((registers.a ^ result) & (data ^ result) & 0x80) != 0);
+    set_flag(V, ((data ^ result) & (registers.a ^ result) &  0x80) != 0);
 
     // Update the register A
     set_register_a(result);
@@ -1076,11 +1092,8 @@ void CPU::add_to_register_a(uint8_t data)
 void CPU::sub_from_register_a(uint8_t data)
 {
     // not sure
-    int8_t negated_data = -static_cast<int8_t>(data);            // wrapping_neg
-    int8_t subtracted_data = negated_data - 1;                   // wrapping_sub(1)
-    uint8_t final_value = static_cast<uint8_t>(subtracted_data); // as u8
-
-    add_to_register_a(final_value);
+	uint8_t negated_data = static_cast<uint8_t>(-static_cast<int8_t>(data) - 1);
+    add_to_register_a(negated_data);
 }
 
 uint8_t CPU::stack_pop()
@@ -1109,49 +1122,73 @@ void CPU::stack_push_u16(uint16_t data)
 
 void CPU::LDY(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, page_cross] = get_operand_address(mode);
     auto data = read(addr);
     registers.y = data;
     update_zero_and_negative_flags(registers.y);
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 void CPU::LDX(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, page_cross] = get_operand_address(mode);
     auto data = read(addr);
     registers.x = data;
     update_zero_and_negative_flags(registers.x);
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 
 void CPU::LDA(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, page_cross] = get_operand_address(mode);
     uint8_t value = read(addr);
     set_register_a(value);
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 
 void CPU::STA(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, _] = get_operand_address(mode);
     write(addr, registers.a);
 }
 
 void CPU::AND(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, page_cross] = get_operand_address(mode);
     auto data = read(addr);
     set_register_a((data & registers.a));
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 void CPU::EOR(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, page_cross] = get_operand_address(mode);
     auto data = read(addr);
     set_register_a((data ^ registers.a));
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 void CPU::ORA(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, page_cross] = get_operand_address(mode);
     auto data = read(addr);
     set_register_a((data | registers.a));
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 
 void CPU::TAX()
@@ -1175,28 +1212,35 @@ void CPU::INY()
 void CPU::SBC(const AddressingMode &mode)
 {
     // A - M - C̅ -> A
-    uint16_t addr = get_operand_address(mode);
+    auto [addr, page_cross] = get_operand_address(mode);
     uint8_t data = read(addr);
 
     uint16_t value = static_cast<uint16_t>(data);
     uint16_t carry_in = get_flag(C) ? 0 : 1;
     uint16_t result = static_cast<uint16_t>(registers.a) - value - carry_in;
 
-    uint8_t result8 = static_cast<uint8_t>(result & 0xFF);
+    registers.a = static_cast<uint8_t>(result & 0xFF);
 
-    set_flag(N, result8 & 0x80);
-    set_flag(Z, result8 == 0);
+    set_flag(N, registers.a & 0x80);
+    set_flag(Z, registers.a == 0);
     set_flag(C, result < 0x100);
-    set_flag(V, ((registers.a ^ result8) & (registers.a ^ data) & 0x80) != 0);
+    set_flag(V, ((registers.a ^ result) & (registers.a ^ data) & 0x80) != 0);
 
-    registers.a = result8;
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 
 void CPU::ADC(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, page_cross] = get_operand_address(mode);
     auto value = read(addr);
     add_to_register_a(value);
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 
 void CPU::asl_accumulator()
@@ -1209,7 +1253,7 @@ void CPU::asl_accumulator()
 }
 uint8_t CPU::ASL(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, _] = get_operand_address(mode);
     auto data = read(addr);
 
     set_flag(C, data >> 7 == 1);
@@ -1228,7 +1272,7 @@ void CPU::lsr_accumulator()
 }
 uint8_t CPU::LSR(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, _] = get_operand_address(mode);
     auto data = read(addr);
 
     set_flag(C, (data & 1) == 1);
@@ -1241,7 +1285,7 @@ uint8_t CPU::LSR(const AddressingMode &mode)
 
 uint8_t CPU::ROL(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, _] = get_operand_address(mode);
     auto data = read(addr);
     bool old_carry = get_flag(C);
 
@@ -1278,7 +1322,7 @@ void CPU::rol_accumulator()
 
 uint8_t CPU::ROR(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, _] = get_operand_address(mode);
     auto data = read(addr);
     bool old_carry = get_flag(C);
 
@@ -1315,7 +1359,7 @@ void CPU::ror_accumulator()
 
 uint8_t CPU::INC(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, _] = get_operand_address(mode);
     uint8_t data = read(addr);
     ++data;
     write(addr, data);
@@ -1335,7 +1379,7 @@ void CPU::DEY()
 }
 uint8_t CPU::DEC(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, _] = get_operand_address(mode);
     auto data = read(addr);
     --data;
     write(addr, data);
@@ -1360,19 +1404,16 @@ void CPU::PHP()
 {
     // Save previous status
     auto flags = registers.p;
-    // Set BREAK
-    set_flag(B, true);
-    // Set BREAK2
-    set_flag(U, true);
-    stack_push(registers.p);
-
+	flags |= B;
+	flags |= U;
+    stack_push(flags);
     // Copy back
     registers.p = flags;
 }
 
 void CPU::BIT(const AddressingMode &mode)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, _] = get_operand_address(mode);
     auto data = read(addr);
     auto and_result = registers.a & data;
     set_flag(Z, and_result == 0);
@@ -1382,10 +1423,14 @@ void CPU::BIT(const AddressingMode &mode)
 
 void CPU::COMPARE(const AddressingMode &mode, uint8_t compare_with)
 {
-    auto addr = get_operand_address(mode);
+    auto [addr, page_cross] = get_operand_address(mode);
     auto data = read(addr);
     set_flag(C, data <= compare_with);
     update_zero_and_negative_flags(compare_with - data);
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 
 void CPU::BRANCH(bool condition)

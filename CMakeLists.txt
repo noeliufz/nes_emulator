@@ -71,3 +71,21 @@ add_executable(emulator
 )
 
 target_link_libraries(emulator ${SDL2_LIBRARIES})
+
+add_executable(tile_test
+    cartridge.h
+    cartridge.cpp
+    tile_test.cpp
+    trace.h
+    trace.cpp
+    CPU.h
+    Bus.cpp
+    Bus.h
+    CPU.cpp
+    Opcode.h
+    Opcode.cpp
+    ${SOURCES}
+)
+
+target_link_libraries(tile_test ${SDL2_LIBRARIES})
+

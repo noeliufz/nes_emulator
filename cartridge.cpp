@@ -48,9 +48,6 @@ Rom::Rom(const std::vector<uint8_t> &raw)
     size_t prg_rom_start = 16 + (skip_trainer ? 512 : 0);
     size_t chr_rom_start = prg_rom_start + prg_rom_size;
 
-    std::cout << chr_rom_start << std::endl;
-    std::cout << chr_rom_size << std::endl;
-    std::cout << raw.size() << std::endl;
 
     if (raw.size() < chr_rom_start + chr_rom_size || raw.size() < prg_rom_start + prg_rom_size)
     {
