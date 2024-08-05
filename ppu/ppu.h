@@ -49,7 +49,7 @@ class NesPPU
         oam_addr = 0;
         cycles = 0;
         scanline = 0;
-		internal_data_buf = 0;
+        internal_data_buf = 0;
         nmi_interrupt = std::nullopt;
     }
 
@@ -73,6 +73,7 @@ class NesPPU
     uint16_t mirror_vram_addr(uint16_t addr);
 
     bool tick(uint8_t cycle);
+    bool is_sprite_0_hit(size_t cycle);
 };
 } // namespace EM
 #endif

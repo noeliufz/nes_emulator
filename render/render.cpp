@@ -1,11 +1,10 @@
 #include "render.h"
 #include <cstddef>
 #include <cstdint>
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
 namespace EM
 {
-
 
 std::array<uint8_t, 4> bg_palette(const NesPPU &ppu, size_t tile_column, size_t tile_row)
 {
@@ -83,7 +82,7 @@ void render(const NesPPU &ppu, Frame &frame)
                 auto value = ((1 & lower) << 1) | (1 & upper);
                 upper >>= 1;
                 lower >>= 1;
-                std::tuple<uint8_t, uint8_t, uint8_t> rgb;
+                std::array<uint8_t, 3> rgb;
                 switch (value)
                 {
                 case 0: {
@@ -128,7 +127,7 @@ void render(const NesPPU &ppu, Frame &frame)
         auto tile_end = ppu.chr_rom.begin() + bank + tile_idx * 16 + 16;
 
         std::vector<uint8_t> tile_data(tile_start, tile_end);
-//        const auto tile_data = &ppu.chr_rom[(bank + tile_idx * 16)];
+        //        const auto tile_data = &ppu.chr_rom[(bank + tile_idx * 16)];
 
         for (int y = 0; y <= 7; ++y)
         {
@@ -147,7 +146,7 @@ void render(const NesPPU &ppu, Frame &frame)
                     continue;
                 }
 
-                std::tuple<uint8_t, uint8_t, uint8_t> rgb;
+                std::array<uint8_t, 3> rgb;
                 switch (value)
                 {
                 case 1: {
@@ -182,7 +181,6 @@ void render(const NesPPU &ppu, Frame &frame)
                 {
                     frame.set_pixel(tile_x + 7 - x, tile_y + 7 - y, rgb);
                 }
-
             }
         }
     }

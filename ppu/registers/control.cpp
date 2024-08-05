@@ -2,7 +2,7 @@
 #include <stdexcept>
 namespace EM
 {
-uint16_t EM::ControlRegister::nametable_addr()
+uint16_t EM::ControlRegister::nametable_addr() const
 {
     switch (bits & 0b11)
     {

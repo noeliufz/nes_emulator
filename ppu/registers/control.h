@@ -23,7 +23,7 @@ class ControlRegister
     {
     }
 
-    uint16_t nametable_addr();
+    uint16_t nametable_addr() const;
     uint8_t vram_addr_increment();
     uint16_t sprt_pattern_addr() const;
     uint16_t bknd_pattern_addr() const;

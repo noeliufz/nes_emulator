@@ -6,20 +6,18 @@
 #include <arm_neon.h>
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 
 #include "bus.h"
 #include "op_code.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>
 #include <pthread.h>
-#include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <iostream>
 
 namespace EM
 {
-
 
 bool CPU::page_cross(uint16_t addr1, uint16_t addr2)
 {
@@ -111,17 +109,17 @@ void CPU::interrupt(Interrupt i)
     stack_push_u16(registers.pc);
 
     auto flag = registers.p;
-	auto v = (i.b_flag_mask & 0b010000) == 1;
-	if (v)
-		flag |= B; // set status to true
-	else
-		flag &= ~B; // clear status
+    auto v = (i.b_flag_mask & 0b010000) == 1;
+    if (v)
+        flag |= B; // set status to true
+    else
+        flag &= ~B; // clear status
 
-	v = (i.b_flag_mask & 0b100000) == 1;
-	if (v)
-		flag |= U; // set status to true
-	else
-		flag &= ~U; // clear status
+    v = (i.b_flag_mask & 0b100000) == 1;
+    if (v)
+        flag |= U; // set status to true
+    else
+        flag &= ~U; // clear status
 
     stack_push(flag);
 
@@ -130,7 +128,6 @@ void CPU::interrupt(Interrupt i)
     bus->tick(i.cpu_cycles);
     registers.pc = read_u16(i.vector_addr);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Get and update flags
@@ -165,44 +162,44 @@ std::pair<uint16_t, bool> CPU::get_absolute_address(const AddressingMode &mode, 
     switch (mode)
     {
     case ZeroPage:
-        return {static_cast<uint16_t>(read(registers.pc)), false};
+        return {static_cast<uint16_t>(read(addr)), false};
 
     case Absolute:
         return {read_u16(registers.pc), false};
 
     case ZeroPage_X: {
-        auto pos = static_cast<uint16_t>(read(registers.pc));
+        auto pos = static_cast<uint16_t>(read(addr));
         // wrapping add
         uint16_t addr_new = pos + static_cast<uint16_t>(registers.x);
         return {addr_new, false};
     }
     case ZeroPage_Y: {
-        auto pos = static_cast<uint16_t>(read(registers.pc));
+        auto pos = static_cast<uint16_t>(read(addr));
         // wrapping add
         uint16_t addr_new = pos + static_cast<uint16_t>(registers.y);
         return {addr_new, false};
     }
 
     case Absolute_X: {
-        auto base = read_u16(registers.pc);
+        auto base = read_u16(addr);
         uint16_t addr_new = base + static_cast<uint16_t>(registers.x);
         return {addr_new, page_cross(base, addr_new)};
     }
     case Absolute_Y: {
-        auto base = read_u16(registers.pc);
+        auto base = read_u16(addr);
         uint16_t addr_new = base + static_cast<uint16_t>(registers.y);
         return {addr_new, page_cross(base, addr_new)};
     }
 
     case Indirect_X: {
-        auto base = read(registers.pc);
+        auto base = read(addr);
         uint8_t ptr = base + registers.x;
         auto lo = read(static_cast<uint16_t>(ptr));
         auto hi = read(static_cast<uint16_t>((ptr + 1)));
         return {static_cast<uint16_t>((static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)))), false};
     }
     case Indirect_Y: {
-        auto base = read(registers.pc);
+        auto base = read(addr);
         auto lo = read(static_cast<uint16_t>(base));
         auto hi = read(static_cast<uint16_t>((base + 1)));
         auto deref_base = (static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)));
@@ -247,7 +244,7 @@ void CPU::add_to_register_a(uint8_t data)
     uint8_t result = static_cast<uint8_t>(sum);
 
     // Set overflow flag
-    set_flag(V, ((data ^ result) & (registers.a ^ result) &  0x80) != 0);
+    set_flag(V, ((data ^ result) & (registers.a ^ result) & 0x80) != 0);
 
     // Update the register A
     set_register_a(result);
@@ -255,7 +252,7 @@ void CPU::add_to_register_a(uint8_t data)
 void CPU::sub_from_register_a(uint8_t data)
 {
     // not sure
-	uint8_t negated_data = static_cast<uint8_t>(-static_cast<int8_t>(data) - 1);
+    uint8_t negated_data = static_cast<uint8_t>(-static_cast<int8_t>(data) - 1);
     add_to_register_a(negated_data);
 }
 
@@ -567,8 +564,8 @@ void CPU::PHP()
 {
     // Save previous status
     auto flags = registers.p;
-	flags |= B;
-	flags |= U;
+    flags |= B;
+    flags |= U;
     stack_push(flags);
     // Copy back
     registers.p = flags;

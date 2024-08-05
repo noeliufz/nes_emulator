@@ -88,7 +88,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else if (addr == 0x4016)
     {
-        // ignore joypad 1;
+        joypad1.write(data);
     }
     else if (addr == 0x4017)
     {
@@ -159,8 +159,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else if (addr == 0x4016)
     {
-        // ignore joypad 1
-        return 0;
+        return joypad1.read();
     }
     else if (addr == 0x4017)
     {
@@ -201,12 +200,16 @@ void Bus::tick(uint8_t cycle)
     cycles += cycle;
     auto new_frame = ppu->tick(cycles * 3);
 
-    if (new_frame) {
-      if (gameloop_callback) {
-        gameloop_callback(*ppu); // Call the callback only if it's initialized
-      } else {
-        throw std::runtime_error("gameloop_callback is not initialized.");
-      }
+    if (new_frame)
+    {
+        if (gameloop_callback)
+        {
+            gameloop_callback(*ppu, joypad1); // Call the callback only if it's initialized
+        }
+        else
+        {
+            throw std::runtime_error("gameloop_callback is not initialized.");
+        }
     }
 }
 

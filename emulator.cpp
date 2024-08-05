@@ -1,11 +1,13 @@
 #include "bus.h"
 #include "cpu.h"
+#include "joypad.h"
 #include "render/frame.h"
 #include "render/render.h"
 #include "trace.h"
 
 #include <SDL.h>
 #include <SDL_events.h>
+#include <SDL_keycode.h>
 #include <SDL_pixels.h>
 #include <SDL_render.h>
 #include <arm_neon.h>
@@ -134,8 +136,8 @@ int main()
     }
 
     // create window
-    SDL_Window *window =
-        SDL_CreateWindow("Nes emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 256*3, 240*3, SDL_WINDOW_SHOWN);
+    SDL_Window *window = SDL_CreateWindow("Nes emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 256.0 * 3.0,
+                                          240.0 * 3.0, SDL_WINDOW_SHOWN);
     if (window == nullptr)
     {
         std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
@@ -156,7 +158,7 @@ int main()
     }
 
     // set scale
-    if (SDL_RenderSetScale(renderer, 3.0f, 3.0f) != 0)
+    if (SDL_RenderSetScale(renderer, 2.0f, 2.0f) != 0)
     {
         std::cerr << "SDL_RenderSetScale Error: " << SDL_GetError() << std::endl;
         SDL_DestroyRenderer(renderer);
@@ -184,33 +186,51 @@ int main()
 
     std::vector<uint8_t> screen_state(32 * 3 * 32, 0);
     std::random_device rd;
-    std::mt19937 rng(rd());
-    std::uniform_int_distribution<int> dist(1, 15);
+    //    std::uniform_int_distribution<int> dist(1, 15);
 
     SDL_Event event;
-  auto gameloop_callback = [&](EM::NesPPU &ppu) {
-    render(ppu, frame);
-    SDL_UpdateTexture(texture, nullptr, frame.data.data(), 256 * 3);
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-    SDL_RenderPresent(renderer);
 
-    while (SDL_PollEvent(&event))
-    {
-      switch (event.type)
-      {
-        case SDL_QUIT:
-        case SDL_KEYDOWN:
-          if (event.key.keysym.sym == SDLK_ESCAPE)
-          {
-            std::exit(0);
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  };
+    std::unordered_map<SDL_Keycode, EM::JoypadButton> key_map = {
+        {SDLK_DOWN, EM::JoypadButton::DOWN},    {SDLK_UP, EM::JoypadButton::UP},
+        {SDLK_RIGHT, EM::JoypadButton::RIGHT},  {SDLK_LEFT, EM::JoypadButton::LEFT},
+        {SDLK_SPACE, EM::JoypadButton::SELECT}, {SDLK_RETURN, EM::JoypadButton::START},
+        {SDLK_a, EM::JoypadButton::BUTTON_A},   {SDLK_s, EM::JoypadButton::BUTTON_A},
+    };
+
+    auto gameloop_callback = [&](EM::NesPPU &ppu, EM::Joypad &joypad) {
+        render(ppu, frame);
+        SDL_UpdateTexture(texture, nullptr, frame.data.data(), 256 * 3);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+        SDL_RenderPresent(renderer);
+
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_ESCAPE)
+                {
+                    std::exit(0);
+                }
+                else if (auto keycode = key_map.find(event.key.keysym.sym); keycode != key_map.end())
+                {
+                    joypad.set_button_pressed_status(keycode->second, true);
+                }
+                break;
+            case SDL_KEYUP: {
+                if (auto keycode = key_map.find(event.key.keysym.sym); keycode != key_map.end())
+                {
+                    joypad.set_button_pressed_status(keycode->second, false);
+                }
+                break;
+            }
+            default:
+                break;
+            }
+        }
+    };
 
     auto bus = EM::Bus(&rom, gameloop_callback);
 

@@ -123,6 +123,10 @@ bool EM::NesPPU::tick(uint8_t cycle)
     cycles += cycle;
     if (cycles >= 341)
     {
+        if (is_sprite_0_hit(cycles))
+        {
+            status.set_sprite_zero_hit(true);
+        }
         cycles -= 341;
         scanline += 1;
 
@@ -146,6 +150,14 @@ bool EM::NesPPU::tick(uint8_t cycle)
     }
     return false;
 }
+
+bool NesPPU::is_sprite_0_hit(size_t cycle)
+{
+    auto y = static_cast<size_t>(oam_data[0]);
+    auto x = static_cast<size_t>(oam_data[3]);
+    return (y == static_cast<size_t>(scanline) && x <= cycle && mask.show_sprites());
+}
+
 void NesPPU::write_to_oam_addr(uint8_t value)
 {
     oam_addr = value;

@@ -14,6 +14,7 @@
 
 #include "cartridge.h"
 
+#include "joypad.h"
 #include "ppu/ppu.h"
 
 namespace EM
@@ -30,13 +31,15 @@ class Bus
     // Bus(Rom *rom);
     ~Bus();
 
+    Joypad joypad1;
+
     size_t cycles;
     std::array<uint8_t, 2048> ram{};
     Rom *rom = nullptr;
 
     std::unique_ptr<NesPPU> ppu;
 
-    std::function<void(NesPPU&)> gameloop_callback;
+    std::function<void(NesPPU &, Joypad &)> gameloop_callback;
     template <typename F> Bus(Rom *rom, F gameloop_callback);
 
     // Read & write from & to the bus
@@ -48,8 +51,7 @@ class Bus
     std::optional<uint8_t> poll_nmi_status();
 };
 // Template constructor implementation
-template <typename F>
-Bus::Bus(Rom *rom, F gameloop_callback): gameloop_callback(gameloop_callback)
+template <typename F> Bus::Bus(Rom *rom, F gameloop_callback) : gameloop_callback(gameloop_callback)
 {
     this->rom = rom;
     cycles = 0;

@@ -1,8 +1,8 @@
 #include "bus.h"
 #include "cpu.h"
 #include "render/frame.h"
-#include "render/render.h"
 #include "render/palette.h"
+#include "render/render.h"
 #include "trace.h"
 
 #include <SDL.h>
@@ -18,116 +18,112 @@
 #include <random>
 #include <vector>
 
-EM::Frame* show_tile(std::vector<uint8_t> chr_rom, size_t bank, size_t tile_n)
+EM::Frame *show_tile(std::vector<uint8_t> chr_rom, size_t bank, size_t tile_n)
 {
-	auto * frame = new EM::Frame();
-	bank = bank * 0x1000;
-	auto tile_start = chr_rom.begin() + (bank + tile_n * 16);
-	auto tile_end = chr_rom.begin() + (bank + tile_n * 16 + 16);
+    auto *frame = new EM::Frame();
+    bank = bank * 0x1000;
+    auto tile_start = chr_rom.begin() + (bank + tile_n * 16);
+    auto tile_end = chr_rom.begin() + (bank + tile_n * 16 + 16);
 
-	const std::vector<uint8_t> tile_data(tile_start, tile_end);
+    const std::vector<uint8_t> tile_data(tile_start, tile_end);
 
-	for (auto y = 0; y <= 7; ++y)
-	{
-		auto upper = tile_data[y];
-		auto lower = tile_data[y + 8];
+    for (auto y = 0; y <= 7; ++y)
+    {
+        auto upper = tile_data[y];
+        auto lower = tile_data[y + 8];
 
-		for (int x = 7; x >= 0; --x)
-		{
-//			auto value = ((1 & lower) << 1) | (1 & upper);
-			auto value = ((1 & upper) << 1) | (1 & lower);
-			upper >>= 1;
-			lower >>= 1;
-			std::tuple<uint8_t, uint8_t, uint8_t> rgb;
-			switch (value)
-			{
-			case 0: {
-				rgb = EM::SystemPalette::palette[0x01];
-				break;
-			}
-			case 1: {
-				rgb = EM::SystemPalette::palette[0x23];
-				break;
-			}
-			case 2: {
-				rgb = EM::SystemPalette::palette[0x27];
-				break;
-			}
-			case 3: {
-				rgb = EM::SystemPalette::palette[0x30];
-				break;
-			}
-			default:
-				throw std::runtime_error("cannot be");
-			}
+        for (int x = 7; x >= 0; --x)
+        {
+            //			auto value = ((1 & lower) << 1) | (1 & upper);
+            auto value = ((1 & upper) << 1) | (1 & lower);
+            upper >>= 1;
+            lower >>= 1;
+            std::array<uint8_t, 3> rgb;
+            switch (value)
+            {
+            case 0: {
+                rgb = EM::SystemPalette::palette[0x01];
+                break;
+            }
+            case 1: {
+                rgb = EM::SystemPalette::palette[0x23];
+                break;
+            }
+            case 2: {
+                rgb = EM::SystemPalette::palette[0x27];
+                break;
+            }
+            case 3: {
+                rgb = EM::SystemPalette::palette[0x30];
+                break;
+            }
+            default:
+                throw std::runtime_error("cannot be");
+            }
 
-			frame->set_pixel(x, y, rgb);
-		}
-	}
-	return frame;
+            frame->set_pixel(x, y, rgb);
+        }
+    }
+    return frame;
 }
-EM::Frame* show_tile_bank(std::vector<uint8_t> chr_rom, size_t bank)
+EM::Frame *show_tile_bank(std::vector<uint8_t> chr_rom, size_t bank)
 {
-	auto * frame = new EM::Frame();
-	auto tile_y = 0;
-	auto tile_x = 0;
-	bank = bank * 0x1000;
+    auto *frame = new EM::Frame();
+    auto tile_y = 0;
+    auto tile_x = 0;
+    bank = bank * 0x1000;
 
+    for (auto tile_n = 0; tile_n < 255; ++tile_n)
+    {
+        if (tile_n != 0 && tile_n % 20 == 0)
+        {
+            tile_y += 10;
+            tile_x = 0;
+        }
 
-	for (auto tile_n = 0; tile_n < 255; ++tile_n)
-	{
-		if (tile_n != 0 && tile_n % 20 ==0) {
-			tile_y += 10;
-			tile_x = 0;
-		}
+        auto tile_start = chr_rom.begin() + (bank + tile_n * 16);
+        auto tile_end = chr_rom.begin() + (bank + tile_n * 16 + 16);
+        const std::vector<uint8_t> tile_data(tile_start, tile_end);
 
-		auto tile_start = chr_rom.begin() + (bank + tile_n * 16);
-		auto tile_end = chr_rom.begin() + (bank + tile_n * 16 + 16);
-		const std::vector<uint8_t> tile_data(tile_start, tile_end);
+        for (auto y = 0; y <= 7; ++y)
+        {
+            auto upper = tile_data[y];
+            auto lower = tile_data[y + 8];
 
-		for (auto y = 0; y <= 7; ++y)
-		{
-			auto upper = tile_data[y];
-			auto lower = tile_data[y + 8];
+            for (int x = 7; x >= 0; --x)
+            {
+                auto value = ((1 & upper) << 1) | (1 & lower);
+                upper >>= 1;
+                lower >>= 1;
+                std::array<uint8_t, 3> rgb;
+                switch (value)
+                {
+                case 0: {
+                    rgb = EM::SystemPalette::palette[0x01];
+                    break;
+                }
+                case 1: {
+                    rgb = EM::SystemPalette::palette[0x23];
+                    break;
+                }
+                case 2: {
+                    rgb = EM::SystemPalette::palette[0x27];
+                    break;
+                }
+                case 3: {
+                    rgb = EM::SystemPalette::palette[0x30];
+                    break;
+                }
+                default:
+                    throw std::runtime_error("cannot be");
+                }
 
-			for (int x = 7; x >= 0; --x)
-			{
-				auto value = ((1 & upper) << 1) | (1 & lower);
-				upper >>= 1;
-				lower >>= 1;
-				std::tuple<uint8_t, uint8_t, uint8_t> rgb;
-				switch (value)
-				{
-				case 0:
-				{
-					rgb = EM::SystemPalette::palette[0x01];
-					break;
-				}
-				case 1:
-				{
-					rgb = EM::SystemPalette::palette[0x23];
-					break;
-				}
-				case 2:
-				{
-					rgb = EM::SystemPalette::palette[0x27];
-					break;
-				}
-				case 3:
-				{
-					rgb = EM::SystemPalette::palette[0x30];
-					break;
-				}
-				default:
-					throw std::runtime_error("cannot be");
-				}
-
-				frame->set_pixel(tile_x + x, tile_y + y, rgb);
-			}
-		}
-		tile_x += 10;
-	}
-	return frame;
+                frame->set_pixel(tile_x + x, tile_y + y, rgb);
+            }
+        }
+        tile_x += 10;
+    }
+    return frame;
 }
 
 SDL_Colour get_color(uint8_t byte)
@@ -247,8 +243,8 @@ int main()
     }
 
     // create window
-    SDL_Window *window =
-        SDL_CreateWindow("Nes emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 256.0*3.0, 240.0*3.0, SDL_WINDOW_SHOWN);
+    SDL_Window *window = SDL_CreateWindow("Nes emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 256.0 * 3.0,
+                                          240.0 * 3.0, SDL_WINDOW_SHOWN);
     if (window == nullptr)
     {
         std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
@@ -293,7 +289,7 @@ int main()
     std::vector<uint8_t> bytes = readFile("../game.nes");
     EM::Rom rom(bytes);
 
-    EM::Frame* frame = show_tile_bank(rom.chr_rom, 1);
+    EM::Frame *frame = show_tile_bank(rom.chr_rom, 1);
 
     std::vector<uint8_t> screen_state(32 * 3 * 32, 0);
     std::random_device rd;
@@ -306,22 +302,22 @@ int main()
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
     SDL_RenderPresent(renderer);
-while(true)
-{
-	while (SDL_PollEvent(&event))
-	{
-		switch (event.type)
-		{
-		case SDL_QUIT:
-		case SDL_KEYDOWN:
-			if (event.key.keysym.sym == SDLK_ESCAPE)
-			{
-				std::exit(0);
-			}
-			break;
-		default:
-			break;
-		}
-	}
-}
+    while (true)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_ESCAPE)
+                {
+                    std::exit(0);
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
 }

@@ -69,6 +69,8 @@ add_executable(emulator
         op_code.cpp
     ${SOURCES}
         cpu_run.cpp
+        joypad.cpp
+        joypad.h
 )
 
 target_link_libraries(emulator ${SDL2_LIBRARIES})
