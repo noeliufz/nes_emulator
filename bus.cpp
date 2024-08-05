@@ -14,15 +14,15 @@ namespace EM
 {
 using std::ostringstream;
 
-Bus::Bus()
-{
-    // clear content of RAM
-    for (auto &i : ram)
-    {
-        i = 0x00;
-    };
-    ppu = nullptr;
-}
+// Bus::Bus()
+// {
+//     // clear content of RAM
+//     for (auto &i : ram)
+//     {
+//         i = 0x00;
+//     };
+//     ppu = nullptr;
+// }
 //
 // Bus::Bus(Rom *rom)
 // {

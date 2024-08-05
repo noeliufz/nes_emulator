@@ -188,7 +188,6 @@ int main()
     std::random_device rd;
     //    std::uniform_int_distribution<int> dist(1, 15);
 
-    SDL_Event event;
 
     std::unordered_map<SDL_Keycode, EM::JoypadButton> key_map = {
         {SDLK_DOWN, EM::JoypadButton::DOWN},    {SDLK_UP, EM::JoypadButton::UP},
@@ -204,6 +203,8 @@ int main()
         SDL_RenderCopy(renderer, texture, nullptr, nullptr);
         SDL_RenderPresent(renderer);
 
+
+	  	SDL_Event event;
         while (SDL_PollEvent(&event))
         {
             switch (event.type)

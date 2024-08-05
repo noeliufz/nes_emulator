@@ -29,7 +29,6 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
     uint8_t data0x10 = read(0x10);
     while (true)
     {
-//        std::cout << EM::trace(*this) << std::endl;
         if (auto nmi = bus->poll_nmi_status(); nmi.has_value())
         {
             interrupt(NMI);

@@ -3,6 +3,7 @@
 //
 #include "scroll.h"
 #include <cstdint>
+#include <iostream>
 namespace EM
 {
 // Write method
