@@ -19,11 +19,11 @@ class NesPPU
 {
   public:
     std::vector<uint8_t> chr_rom;
-    std::array<uint8_t, 32> palette_table;
-    std::array<uint8_t, 2048> vram;
+    std::array<uint8_t, 32> palette_table{};
+    std::array<uint8_t, 2048> vram{};
 
     uint8_t oam_addr;
-    std::array<uint8_t, 256> oam_data;
+    std::array<uint8_t, 256> oam_data{};
 
     AddrRegister address_register;
     ControlRegister ctrl;
@@ -70,7 +70,7 @@ class NesPPU
     void increment_vram_addr();
     uint8_t read_data();
     uint8_t read_status();
-    uint16_t mirror_vram_addr(uint16_t addr);
+    uint16_t mirror_vram_addr(uint16_t addr) const;
 
     bool tick(uint8_t cycle);
     bool is_sprite_0_hit(size_t cycle);

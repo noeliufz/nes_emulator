@@ -112,13 +112,13 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else if (addr >= 0x8000 && addr <= 0xFFFF)
     {
-        ostringstream oss;
-        oss << "Trying to access 0x" << std::hex << addr;
-        throw std::runtime_error(oss.str());
+//        ostringstream oss;
+//        oss << "Trying to access 0x" << std::hex << addr;
+//        throw std::runtime_error(oss.str());
     }
     else
     {
-        std::cerr << "Ignoring mem write-access at 0x" << std::hex << addr << std::endl;
+//        std::cerr << "Ignoring mem write-access at 0x" << std::hex << addr << std::endl;
     }
 }
 
@@ -143,10 +143,6 @@ uint8_t Bus::read(uint16_t addr)
     else if (addr == 0x2004)
     {
         return ppu->read_oam_data();
-    }
-    else if (addr == 0x2007)
-    {
-        return ppu->read_data();
     }
     else if (addr == 0x2007)
     {
@@ -178,7 +174,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else
     {
-        std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
+//        std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
         return 0;
     }
 }
@@ -197,19 +193,14 @@ uint8_t Bus::read_prg_rom(uint16_t addr)
 
 void Bus::tick(uint8_t cycle)
 {
-    cycles += cycle;
-    auto new_frame = ppu->tick(cycles * 3);
+    cycles += static_cast<size_t>(cycle);
+	auto nmi_before = ppu->nmi_interrupt.has_value();
+	auto f = ppu->tick(cycle * 3);
+	auto nmi_after = ppu->nmi_interrupt.has_value();
 
-    if (new_frame)
+    if (f)
     {
-        if (gameloop_callback)
-        {
-            gameloop_callback(*ppu, joypad1); // Call the callback only if it's initialized
-        }
-        else
-        {
-            throw std::runtime_error("gameloop_callback is not initialized.");
-        }
+		gameloop_callback(*ppu, joypad1); // Call the callback only if it's initialized
     }
 }
 

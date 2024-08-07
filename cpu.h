@@ -43,6 +43,7 @@ enum CpuFlags
 enum class InterruptType
 {
     NMI,
+	BRK,
 };
 
 class Interrupt
@@ -158,6 +159,7 @@ class CPU
 };
 // Define the NMI interrupt as a constant instance of Interrupt
 	static const Interrupt NMI(InterruptType::NMI, 0xfffa, 0b00100000, 2);
+	static const Interrupt BRK(InterruptType::BRK, 0xfffe, 0b00110000, 1);
 } // namespace EM
 
 #endif // MYNESEMULATOR__CPU_H_

@@ -87,7 +87,7 @@ uint8_t EM::NesPPU::read_data()
     }
     else if (address == 0x3f10 || address == 0x3f14 || address == 0x3f18 || address == 0x3f1c)
     {
-        auto add_mirror = address - 0x10;
+        uint16_t add_mirror = address - 0x10;
         return palette_table[(add_mirror - 0x3f00)];
     }
     else if (address >= 0x3f00 && address <= 0x3fff)
@@ -99,7 +99,7 @@ uint8_t EM::NesPPU::read_data()
         throw std::runtime_error("unexpected access to mirrored space " + std::to_string(address));
     }
 }
-uint16_t EM::NesPPU::mirror_vram_addr(uint16_t addr)
+uint16_t EM::NesPPU::mirror_vram_addr(uint16_t addr) const
 {
     uint16_t mirrored_vram = addr & 0b10111111111111;
     uint16_t vram_index = mirrored_vram - 0x2000;
@@ -120,7 +120,7 @@ uint16_t EM::NesPPU::mirror_vram_addr(uint16_t addr)
 }
 bool EM::NesPPU::tick(uint8_t cycle)
 {
-    cycles += cycle;
+    cycles += static_cast<size_t>(cycle);
     if (cycles >= 341)
     {
         if (is_sprite_0_hit(cycles))

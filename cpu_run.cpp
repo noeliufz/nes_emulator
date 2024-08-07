@@ -26,9 +26,10 @@ void CPU::run()
 
 void CPU::run_with_callback(std::function<void(CPU &)> callback)
 {
-    uint8_t data0x10 = read(0x10);
     while (true)
     {
+//		std::cout << trace(*this) << std::endl;
+
         if (auto nmi = bus->poll_nmi_status(); nmi.has_value())
         {
             interrupt(NMI);
@@ -61,6 +62,8 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             std::cerr << e.what() << std::endl;
         }
 
+//		std::cout << op->mnemonic << std::endl;
+
         switch (code)
         {
         case 0xa9:
@@ -85,8 +88,9 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             break;
         }
 
-        case 0x00:
-            return;
+        case 0x00:{
+			return;
+		}
 
             /* CLD */
         case 0xd8: {
@@ -622,7 +626,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             }
             else
             {
-                set_flag(V, true);
+                set_flag(V, false); // TODO: !
             }
 
             update_zero_and_negative_flags(result);
@@ -634,7 +638,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0xeb: {
             auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
-            // not sure
+            // TODO: not sure
             sub_from_register_a(data);
             break;
         }
@@ -684,7 +688,6 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0xfc: {
             auto [addr, page_cross] = get_operand_address(op->mode);
             auto data = read(addr);
-            /* do nothing */
             if (page_cross)
             {
                 bus->tick(1);
@@ -762,7 +765,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0x97:
         case 0x8f:
         case 0x83: {
-            auto data = registers.a & registers.x;
+            auto data = static_cast<uint8_t>(registers.a & registers.x);
             auto [addr, _] = get_operand_address(op->mode);
             write(addr, data);
             break;

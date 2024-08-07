@@ -188,7 +188,6 @@ int main()
     std::random_device rd;
     //    std::uniform_int_distribution<int> dist(1, 15);
 
-
     std::unordered_map<SDL_Keycode, EM::JoypadButton> key_map = {
         {SDLK_DOWN, EM::JoypadButton::DOWN},    {SDLK_UP, EM::JoypadButton::UP},
         {SDLK_RIGHT, EM::JoypadButton::RIGHT},  {SDLK_LEFT, EM::JoypadButton::LEFT},
@@ -203,8 +202,7 @@ int main()
         SDL_RenderCopy(renderer, texture, nullptr, nullptr);
         SDL_RenderPresent(renderer);
 
-
-	  	SDL_Event event;
+        SDL_Event event;
         while (SDL_PollEvent(&event))
         {
             switch (event.type)
@@ -234,8 +232,8 @@ int main()
     };
 
     auto bus = EM::Bus(&rom, gameloop_callback);
-
     auto cpu = EM::CPU(&bus);
     cpu.reset();
     cpu.run();
+//    cpu.run_with_callback([&](EM::CPU &cpu) { std::cout << trace(cpu) << std::endl; });
 }
