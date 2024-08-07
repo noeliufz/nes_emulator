@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
-#include <iostream>
 namespace EM
 {
 
@@ -228,8 +227,8 @@ void render(const NesPPU &ppu, Frame &frame)
                     throw std::runtime_error("cannot be");
                 }
 
-                int final_x = tile_x + (flip_horizontal ? 7 - x : x);
-                int final_y = tile_y + (flip_vertical ? 7 - y : y);
+                size_t final_x = tile_x + (flip_horizontal ? 7 - x : x);
+                size_t final_y = tile_y + (flip_vertical ? 7 - y : y);
                 frame.set_pixel(final_x, final_y, rgb);
             }
         }

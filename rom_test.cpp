@@ -190,23 +190,9 @@ int main()
     SDL_Event event;
 
     cpu.run_with_callback([&](EM::CPU &cpu) {
+		std::cout << static_cast<int>(cpu.registers.pc) << std::endl;
+		std::cout <<static_cast<int>(cpu.registers.sp)<<std::endl;
         std::cout << trace(cpu) << std::endl;
-        // SDL_Event event;
-        // while (SDL_PollEvent(&event))
-        // {
-        // handle_user_input(cpu, event);
-        // }
-        // cpu.write(0xfe, dist(rng));
-
-        // if (read_screen_state(cpu, screen_state))
-        // {
-        //     SDL_UpdateTexture(texture, nullptr, screen_state.data(), 32 * 3);
-        //     SDL_RenderClear(renderer);
-        //     SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-        //     SDL_RenderPresent(renderer);
-        // }
-        //
-        // std::this_thread::sleep_for(std::chrono::nanoseconds(70'000));
     });
 
     // clear resources

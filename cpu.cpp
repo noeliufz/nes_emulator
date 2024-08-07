@@ -109,7 +109,7 @@ void CPU::interrupt(Interrupt i)
     stack_push_u16(registers.pc);
 
     auto flag = registers.p;
-    auto v = (i.b_flag_mask & 0b010000) == 1;
+    bool v = (i.b_flag_mask & 0b010000) == 1;
     if (v)
         flag |= B; // set status to true
     else
@@ -263,11 +263,11 @@ void CPU::sub_from_register_a(uint8_t data)
 uint8_t CPU::stack_pop()
 {
     ++registers.sp;
-    return read(static_cast<uint16_t>(STACK) + static_cast<uint16_t>(registers.sp));
+    return read(static_cast<uint16_t>(static_cast<uint16_t>(STACK) + static_cast<uint16_t>(registers.sp)));
 }
 void CPU::stack_push(uint8_t data)
 {
-    write(static_cast<uint16_t>(STACK) + static_cast<uint16_t>(registers.sp), data);
+    write(static_cast<uint16_t>(static_cast<uint16_t>(STACK) + static_cast<uint16_t>(registers.sp)), data);
     --registers.sp;
 }
 uint16_t CPU::stack_pop_u16()

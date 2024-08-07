@@ -169,7 +169,9 @@ std::string trace(EM::CPU &cpu)
                  << static_cast<int>(cpu.registers.x) << " Y:" << std::hex << std::setw(2) << std::setfill(' ')
                  << static_cast<int>(cpu.registers.y) << " P:" << std::hex << std::setw(2) << std::setfill(' ')
                  << static_cast<int>(cpu.registers.p) << " SP:" << std::hex << std::setw(2) << std::setfill(' ')
-                 << static_cast<int>(cpu.registers.sp);
+                 << static_cast<int>(cpu.registers.sp) << " PPU:"
+				 << static_cast<int>(cpu.bus->ppu->cycles) << "," << static_cast<int>(cpu.bus->ppu->scanline)
+				 << " CYC:" << static_cast<int>(cpu.bus->cycles);
 
     return final_stream.str();
 }

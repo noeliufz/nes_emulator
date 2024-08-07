@@ -21,7 +21,7 @@ namespace EM
 {
 void CPU::run()
 {
-    run_with_callback([this](CPU &) {});
+    run_with_callback([](CPU &) {});
 }
 
 void CPU::run_with_callback(std::function<void(CPU &)> callback)

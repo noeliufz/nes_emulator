@@ -113,13 +113,13 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else if (addr >= 0x8000 && addr <= 0xFFFF)
     {
-        //        ostringstream oss;
-        //        oss << "Trying to access 0x" << std::hex << addr;
-        //        throw std::runtime_error(oss.str());
+                ostringstream oss;
+                oss << "Trying to access 0x" << std::hex << addr;
+                throw std::runtime_error(oss.str());
     }
     else
     {
-        //        std::cerr << "Ignoring mem write-access at 0x" << std::hex << addr << std::endl;
+                std::cerr << "Ignoring mem write-access at 0x" << std::hex << addr << std::endl;
     }
 }
 
@@ -134,7 +134,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else if (addr == 0x2000 || addr == 0x2001 || addr == 0x2003 || addr == 0x2005 || addr == 0x2006 || addr == 0x4014)
     {
-        // std::cerr << "Attempt to read from write-only PPU address 0x" << std::hex << addr << std::endl;
+		std::cerr << "Attempt to read from write-only PPU address 0x" << std::hex << addr << std::endl;
         return 0;
     }
     else if (addr == 0x2002)
@@ -175,13 +175,13 @@ uint8_t Bus::read(uint16_t addr)
     }
     else
     {
-        //        std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
+                std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
         return 0;
     }
 }
 
 // read prg rom
-uint8_t Bus::read_prg_rom(uint16_t addr)
+uint8_t Bus::read_prg_rom(uint16_t addr) const
 {
     addr -= 0x8000;
     if (rom->prg_rom.size() == 0x4000 && addr >= 0x4000)
@@ -196,7 +196,7 @@ void Bus::tick(uint8_t cycle)
 {
     cycles += static_cast<size_t>(cycle);
     auto nmi_before = ppu->nmi_interrupt.has_value();
-    auto f = ppu->tick(cycle * 3);
+    ppu->tick(cycle * 3);
     auto nmi_after = ppu->nmi_interrupt.has_value();
 
     if (!nmi_before && nmi_after)
