@@ -147,7 +147,7 @@ void CPU::set_flag(CpuFlags f, bool v)
 void CPU::update_zero_and_negative_flags(const uint8_t result)
 {
     set_flag(Z, result == 0);        // update zero flag
-    set_flag(N, (result >> 7) == 1); // update negative flag
+    set_flag(N, result & 0x80); 		// update negative flag
 }
 
 void CPU::update_negative_flags(const uint8_t result)
@@ -168,15 +168,15 @@ std::pair<uint16_t, bool> CPU::get_absolute_address(const AddressingMode &mode, 
         return {read_u16(addr), false};
 
     case ZeroPage_X: {
-        auto pos = static_cast<uint16_t>(read(addr));
+        auto pos = read(addr);
         // wrapping add
-        uint16_t addr_new = pos + static_cast<uint16_t>(registers.x);
+        auto addr_new = static_cast<uint16_t>(static_cast<uint8_t>(pos + registers.x));
         return {addr_new, false};
     }
     case ZeroPage_Y: {
         auto pos = static_cast<uint16_t>(read(addr));
         // wrapping add
-        uint16_t addr_new = pos + static_cast<uint16_t>(registers.y);
+        auto addr_new = static_cast<uint16_t>(static_cast<uint8_t>(pos + registers.y));
         return {addr_new, false};
     }
 
@@ -195,13 +195,13 @@ std::pair<uint16_t, bool> CPU::get_absolute_address(const AddressingMode &mode, 
         auto base = read(addr);
         uint8_t ptr = base + registers.x;
         auto lo = read(static_cast<uint16_t>(ptr));
-        auto hi = read(static_cast<uint16_t>((ptr + 1)));
+        auto hi = read(static_cast<uint16_t>((static_cast<uint8_t>(ptr + 1))));
         return {static_cast<uint16_t>((static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)))), false};
     }
     case Indirect_Y: {
         auto base = read(addr);
         auto lo = read(static_cast<uint16_t>(base));
-        auto hi = read(static_cast<uint16_t>((base + 1)));
+        auto hi = read(static_cast<uint16_t>((static_cast<uint8_t>(base + 1))));
         auto deref_base = (static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)));
         auto deref = deref_base + (static_cast<uint16_t>(registers.y));
         return {deref, page_cross(deref, deref_base)};
@@ -378,26 +378,28 @@ void CPU::SBC(const AddressingMode &mode)
     // A - M - C̅ -> A
     auto [addr, page_cross] = get_operand_address(mode);
     uint8_t data = read(addr);
-
+//
     uint16_t value = static_cast<uint16_t>(data);
     uint16_t carry_in = get_flag(C) ? 0 : 1;
     uint16_t result = static_cast<uint16_t>(registers.a) - value - carry_in;
+//
+//	set_register_a(result & 0xff);
 
-    registers.a = static_cast<uint8_t>(result & 0xFF);
 
-    set_flag(N, registers.a & 0x80);
-    set_flag(Z, registers.a == 0);
-    set_flag(C, result < 0x100);
+    set_flag(N, result & 0x80);
+    set_flag(Z, result == 0);
+    set_flag(C, result < 0xff);
     set_flag(V, ((registers.a ^ result) & (registers.a ^ data) & 0x80) != 0);
-
+	registers.a = static_cast<uint8_t>(result & 0xFF);
 
 //	auto [addr, page_cross] = get_operand_address(mode);
 //	uint8_t data = read(addr);
-//	add_to_register_a(static_cast<uint8_t>(static_cast<int8_t>(data) + 1)); // Convert to signed, negate and subtract 1
-//
-//	if (page_cross) {
-//		bus->tick(1);
-//	}
+//	add_to_register_a(static_cast<uint8_t>(~data + 1)); // Convert to signed, negate and subtract 1
+//	add_to_register_a(static_cast<uint8_t>(~data + 1)); // Convert to signed, negate and subtract 1
+
+	if (page_cross) {
+		bus->tick(1);
+	}
 }
 
 void CPU::ADC(const AddressingMode &mode)
@@ -605,7 +607,7 @@ void CPU::BRANCH(bool condition)
     {
 		bus->tick(1);
 
-        int8_t jump = static_cast<int8_t>(read(registers.pc));
+        auto jump = static_cast<int8_t>(read(registers.pc));
         auto jump_addr = static_cast<uint16_t>(registers.pc + 1 + static_cast<uint16_t>(jump));
 
 		if (((registers.pc + 1) & 0xff00) != (jump_addr & 0xff00))

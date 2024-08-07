@@ -1,5 +1,7 @@
 #include "bus.h"
 #include "cpu.h"
+#include "joypad.h"
+#include "ppu/ppu.h"
 #include "trace.h"
 #include <SDL.h>
 #include <SDL_pixels.h>
@@ -130,7 +132,7 @@ int main()
 
     // create window
     SDL_Window *window =
-        SDL_CreateWindow("Snake game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 320, SDL_WINDOW_SHOWN);
+        SDL_CreateWindow("Test rom", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 320, SDL_WINDOW_SHOWN);
     if (window == nullptr)
     {
         std::cerr << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
@@ -175,7 +177,7 @@ int main()
     std::vector<uint8_t> bytes = readFile("../test.nes");
     EM::Rom rom(bytes);
 
-    auto bus = EM::Bus(&rom);
+    auto bus = EM::Bus(&rom, [](EM::NesPPU &ppu, EM::Joypad &joypad) {});
     auto cpu = EM::CPU(&bus);
     cpu.reset();
     cpu.registers.pc = 0xC000;

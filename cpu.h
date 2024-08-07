@@ -37,7 +37,7 @@ enum CpuFlags
     B = (1 << 4), // Break
     U = (1 << 5), // *Unused* Break 2
     V = (1 << 6), // Overflow
-    N = (1 << 7), // Negative
+    N = (0b10000000), // Negative
 };
 
 enum class InterruptType

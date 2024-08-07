@@ -367,7 +367,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
             /* RTS */
         case 0x60: {
-            registers.pc = stack_pop_u16() + 1;
+            registers.pc = static_cast<uint16_t>(stack_pop_u16() + (uint16_t)1);
             break;
         }
 
@@ -453,6 +453,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0x94:
         case 0x8c: {
             auto [addr, _] = get_operand_address(op->mode);
+//			std::cout << "STY" << std::hex << static_cast<int>(addr) << std::endl;
             write(addr, registers.y);
             break;
         }
