@@ -14,31 +14,6 @@ namespace EM
 {
 using std::ostringstream;
 
-// Bus::Bus()
-// {
-//     // clear content of RAM
-//     for (auto &i : ram)
-//     {
-//         i = 0x00;
-//     };
-//     ppu = nullptr;
-// }
-//
-// Bus::Bus(Rom *rom)
-// {
-//     // clear content of RAM
-//     for (auto &i : ram)
-//     {
-//         i = 0x00;
-//     };
-//
-//     this->rom = rom;
-//
-//     cycles = 0;
-//
-//     ppu = std::make_unique<NesPPU>(this->rom->chr_rom, this->rom->screen_mirroring);
-// }
-
 Bus::~Bus() = default;
 
 // write data to RAM
@@ -113,13 +88,13 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else if (addr >= 0x8000 && addr <= 0xFFFF)
     {
-                ostringstream oss;
-                oss << "Trying to access 0x" << std::hex << addr;
-                throw std::runtime_error(oss.str());
+		ostringstream oss;
+		oss << "Trying to access 0x" << std::hex << addr;
+		throw std::runtime_error(oss.str());
     }
     else
     {
-                std::cerr << "Ignoring mem write-access at 0x" << std::hex << addr << std::endl;
+		std::cerr << "Ignoring mem write-access at 0x" << std::hex << addr << std::endl;
     }
 }
 
@@ -134,7 +109,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else if (addr == 0x2000 || addr == 0x2001 || addr == 0x2003 || addr == 0x2005 || addr == 0x2006 || addr == 0x4014)
     {
-		std::cerr << "Attempt to read from write-only PPU address 0x" << std::hex << addr << std::endl;
+//		std::cerr << "Attempt to read from write-only PPU address 0x" << std::hex << addr << std::endl;
         return 0;
     }
     else if (addr == 0x2002)
@@ -175,7 +150,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else
     {
-                std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
+//                std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
         return 0;
     }
 }
@@ -196,16 +171,16 @@ void Bus::tick(uint8_t cycle)
 {
     cycles += static_cast<size_t>(cycle);
     auto nmi_before = ppu->nmi_interrupt.has_value();
-    ppu->tick(cycle * 3);
+    auto f = ppu->tick(cycle * 3);
     auto nmi_after = ppu->nmi_interrupt.has_value();
 
-    if (!nmi_before && nmi_after)
+    if (f)
     {
-        gameloop_callback(*ppu, joypad1); // Call the callback only if it's initialized
+		gameloop_callback(*ppu, joypad1);
     }
 }
 
-std::optional<uint8_t> Bus::poll_nmi_status()
+std::optional<uint8_t> Bus::poll_nmi_status() const
 {
     return ppu->nmi_interrupt;
 }

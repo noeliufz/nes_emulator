@@ -64,9 +64,6 @@ void render_name_table(const NesPPU &ppu, Frame &frame, std::vector<uint8_t> &na
                        std::ptrdiff_t shift_y)
 {
     auto bank = ppu.ctrl.bknd_pattern_addr();
-//    auto start = name_table.begin() + 0x3c0;
-//    auto end = name_table.begin() + 0x400;
-//    auto attribute_table = std::vector<uint8_t>(start, end);
 	auto attribute_table = name_table.data() + 0x3c0;
     for (size_t i = 0; i < 0x3c0; ++i)
     {
@@ -170,18 +167,19 @@ void render(const NesPPU &ppu, Frame &frame)
 
     if (scroll_x > 0)
     {
-        Rect r{0, 0, scroll_x, 240};
-        render_name_table(ppu, frame, second_nametable, r, static_cast<std::ptrdiff_t>(256 - scroll_x), static_cast<std::ptrdiff_t>(0));
+        Rect r1{0, 0, scroll_x, 240};
+        render_name_table(ppu, frame, second_nametable, r1, static_cast<std::ptrdiff_t>(256 - scroll_x), static_cast<std::ptrdiff_t>(0));
     }
     else if (scroll_y > 0)
     {
-        Rect r{0, 0, 256, scroll_y};
-        render_name_table(ppu, frame, second_nametable, r, static_cast<std::ptrdiff_t >(0), static_cast<std::ptrdiff_t>(240 - scroll_y));
+        Rect r2{0, 0, 256, scroll_y};
+        render_name_table(ppu, frame, second_nametable, r2, static_cast<std::ptrdiff_t >(0), static_cast<std::ptrdiff_t>(240 - scroll_y));
     }
 
     std::array<uint8_t, 3> rgb;
-    for (size_t i = ppu.oam_data.size() - 4; i >= 0; i = i - 4)
+    for (int j = static_cast<int>(ppu.oam_data.size() - 4); j >= 0; j = j - 4)
     {
+		auto i = static_cast<size_t>(j);
         uint16_t tile_idx = ppu.oam_data[i + 1];
         size_t tile_x = ppu.oam_data[i + 3];
         size_t tile_y = ppu.oam_data[i];

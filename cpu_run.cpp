@@ -28,8 +28,8 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 {
     while (true)
     {
-//		std::cout << trace(*this) << std::endl;
-
+//        std::cout << trace(*this) << std::endl;
+//		trace(*this);
         if (auto nmi = bus->poll_nmi_status(); nmi.has_value())
         {
             interrupt(NMI);
@@ -40,6 +40,8 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         auto code = read(registers.pc);
         ++registers.pc;
         auto state = registers.pc;
+
+
 
         const EM::OpCode *op = nullptr;
         try
@@ -62,8 +64,8 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             std::cerr << e.what() << std::endl;
         }
 
-//		std::cout << op->mnemonic << std::endl;
-
+        //		std::cout << op->mnemonic << std::endl;
+//		std::cout << static_cast<int>(registers.pc) << ", " << op->mnemonic << std::endl;
         switch (code)
         {
         case 0xa9:
@@ -88,9 +90,9 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             break;
         }
 
-        case 0x00:{
-			return;
-		}
+        case 0x00: {
+            return;
+        }
 
             /* CLD */
         case 0xd8: {
@@ -348,7 +350,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
                 auto lo = read(addr);
                 auto hi = read(addr & 0xFF00);
                 ref = static_cast<uint16_t>(static_cast<uint16_t>(static_cast<uint16_t>(hi)) << 8 |
-											(static_cast<uint16_t>(lo)));
+                                            (static_cast<uint16_t>(lo)));
             }
             else
             {
@@ -360,7 +362,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
             /* JSR */
         case 0x20: {
-            stack_push_u16(registers.pc + 2 - 1);
+            stack_push_u16(static_cast<uint16_t>(registers.pc + 2) - 1);
             auto target = read_u16(registers.pc);
             registers.pc = target;
             break;
@@ -454,7 +456,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0x94:
         case 0x8c: {
             auto [addr, _] = get_operand_address(op->mode);
-//			std::cout << "STY" << std::hex << static_cast<int>(addr) << std::endl;
+            //			std::cout << "STY" << std::hex << static_cast<int>(addr) << std::endl;
             write(addr, registers.y);
             break;
         }

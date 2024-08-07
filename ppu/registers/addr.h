@@ -3,13 +3,14 @@
 
 #include <cstdint>
 #include <utility>
+#include <array>
 
 namespace EM
 {
 class AddrRegister
 {
   private:
-    std::pair<uint8_t, uint8_t> value;
+    std::array<uint8_t, 2> value;
     bool hi_ptr;
 
   public:

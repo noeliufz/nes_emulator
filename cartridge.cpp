@@ -52,8 +52,12 @@ Rom::Rom(const std::vector<uint8_t> &raw)
         throw std::invalid_argument("File is too small for specified PRG and CHR ROM sizes");
     }
 
-    prg_rom.assign(raw.begin() + static_cast<std::vector<char>::difference_type >(prg_rom_start), raw.begin() + static_cast<std::vector<char>::difference_type >(prg_rom_start) + static_cast<std::vector<char>::difference_type >(prg_rom_size));
-    chr_rom.assign(raw.begin() + static_cast<std::vector<char>::difference_type >(chr_rom_start), raw.begin() + static_cast<std::vector<char>::difference_type >(chr_rom_start) + static_cast<std::vector<char>::difference_type >(chr_rom_size));
+    prg_rom.assign(raw.begin() + static_cast<std::vector<char>::difference_type>(prg_rom_start),
+                   raw.begin() + static_cast<std::vector<char>::difference_type>(prg_rom_start) +
+                       static_cast<std::vector<char>::difference_type>(prg_rom_size));
+    chr_rom.assign(raw.begin() + static_cast<std::vector<char>::difference_type>(chr_rom_start),
+                   raw.begin() + static_cast<std::vector<char>::difference_type>(chr_rom_start) +
+                       static_cast<std::vector<char>::difference_type>(chr_rom_size));
 }
 
 } // namespace EM

@@ -48,7 +48,7 @@ class Bus
     uint8_t read_prg_rom(uint16_t addr) const;
 
     void tick(uint8_t cycle);
-    std::optional<uint8_t> poll_nmi_status();
+    std::optional<uint8_t> poll_nmi_status() const;
 };
 // Template constructor implementation
 template <typename F> Bus::Bus(Rom *rom, F gameloop_callback) : gameloop_callback(gameloop_callback)

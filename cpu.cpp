@@ -182,12 +182,12 @@ std::pair<uint16_t, bool> CPU::get_absolute_address(const AddressingMode &mode, 
 
     case Absolute_X: {
         auto base = read_u16(addr);
-        uint16_t addr_new = base + static_cast<uint16_t>(registers.x);
+        auto addr_new = static_cast<uint16_t>(base + static_cast<uint16_t>(registers.x));
         return {addr_new, page_cross(base, addr_new)};
     }
     case Absolute_Y: {
         auto base = read_u16(addr);
-        uint16_t addr_new = base + static_cast<uint16_t>(registers.y);
+        auto addr_new = static_cast<uint16_t>(base + static_cast<uint16_t>(registers.y));
         return {addr_new, page_cross(base, addr_new)};
     }
 
@@ -252,9 +252,9 @@ void CPU::add_to_register_a(uint8_t data)
 void CPU::sub_from_register_a(uint8_t data)
 {
     // not sure
-	int8_t negated_data = static_cast<int8_t>(-static_cast<int8_t>(data));
+	auto negated_data = static_cast<int8_t>(-static_cast<int8_t>(data));
 	// Perform wrapping subtraction
-	uint8_t result = static_cast<uint8_t>(negated_data - 1);
+	auto result = static_cast<uint8_t>(negated_data - 1);
 	add_to_register_a(result);
 //    uint8_t negated_data = static_cast<uint8_t>(-static_cast<int8_t>(data) - 1);
 //    add_to_register_a(negated_data);
