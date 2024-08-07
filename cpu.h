@@ -155,7 +155,7 @@ class CPU
 
   private:
     const uint16_t STACK = 0x0100;
-    const uint16_t STACK_RESET = 0xfd;
+    const uint8_t STACK_RESET = 0xfd;
 };
 // Define the NMI interrupt as a constant instance of Interrupt
 	static const Interrupt NMI(InterruptType::NMI, 0xfffa, 0b00100000, 2);

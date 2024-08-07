@@ -18,7 +18,7 @@ void EM::AddrRegister::set(uint16_t data)
 
 uint16_t EM::AddrRegister::get()
 {
-    return (static_cast<uint16_t>(value.first) << 8) | static_cast<uint16_t>(value.second);
+    return static_cast<uint16_t>(static_cast<uint16_t>(value.first) << 8) | static_cast<uint16_t>(value.second);
 }
 
 void EM::AddrRegister::update(uint8_t data)

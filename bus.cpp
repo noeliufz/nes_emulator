@@ -98,7 +98,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     else if (addr == 0x4014)
     {
         std::array<uint8_t, 256> buffer = {0};
-        uint16_t hi = static_cast<uint16_t>(data) << 8;
+        auto hi = static_cast<uint16_t>(static_cast<uint16_t>(data) << 8);
         for (uint16_t i = 0; i < 256; ++i)
         {
             buffer[i] = read(hi + i);

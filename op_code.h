@@ -34,7 +34,7 @@ struct OpCode
     uint8_t cycles;
     AddressingMode mode;
     // constructor
-    OpCode(int i_code, const char *str, int i_len, int i_cycles, AddressingMode addressing_mode)
+    OpCode(uint8_t i_code, const char *str, uint8_t i_len, uint8_t i_cycles, AddressingMode addressing_mode)
         : code(i_code), mnemonic(str), len(i_len), cycles(i_cycles), mode(addressing_mode)
     {
     }

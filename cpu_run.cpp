@@ -347,7 +347,8 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             {
                 auto lo = read(addr);
                 auto hi = read(addr & 0xFF00);
-                ref = (static_cast<uint16_t>(hi)) << 8 | (static_cast<uint16_t>(lo));
+                ref = static_cast<uint16_t>(static_cast<uint16_t>(static_cast<uint16_t>(hi)) << 8 |
+											(static_cast<uint16_t>(lo)));
             }
             else
             {
@@ -588,8 +589,8 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         case 0xcb: {
             const auto [addr, _] = get_operand_address(op->mode);
             auto data = read(addr);
-            auto x_and_a = registers.x & registers.a;
-            auto result = x_and_a - data;
+            auto x_and_a = static_cast<uint8_t>(registers.x & registers.a);
+            auto result = static_cast<uint8_t>(x_and_a - data);
 
             if (data <= x_and_a)
             {
@@ -822,7 +823,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 
             /* AHX Absolute Y */
         case 0x9f: {
-            auto mem_addr = read_u16(registers.pc) + static_cast<uint16_t>(registers.y);
+            auto mem_addr = static_cast<uint16_t>(read_u16(registers.pc) + static_cast<uint16_t>(registers.y));
             uint8_t data = registers.a & registers.x & static_cast<uint8_t>(mem_addr >> 8);
             write(mem_addr, data);
             break;

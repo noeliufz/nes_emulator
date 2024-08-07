@@ -68,7 +68,7 @@ void render_name_table(const NesPPU &ppu, Frame &frame, std::vector<uint8_t> &na
 //    auto end = name_table.begin() + 0x400;
 //    auto attribute_table = std::vector<uint8_t>(start, end);
 	auto attribute_table = name_table.data() + 0x3c0;
-    for (auto i = 0; i < 0x3c0; ++i)
+    for (size_t i = 0; i < 0x3c0; ++i)
     {
         auto tile_column = i % 32;
         auto tile_row = i / 32;
@@ -108,8 +108,11 @@ void render_name_table(const NesPPU &ppu, Frame &frame, std::vector<uint8_t> &na
                 default:
                     throw std::runtime_error("cannot be");
                 }
-                auto pixel_x = static_cast<size_t >(tile_column * 8 + x);
-                auto pixel_y = static_cast<size_t >(tile_row * 8 + y);
+
+				auto x_size = static_cast<size_t>(x);
+				auto y_size = static_cast<size_t>(y);
+                auto pixel_x = static_cast<size_t >(tile_column * 8 + x_size);
+                auto pixel_y = static_cast<size_t >(tile_row * 8 + y_size);
 
 
                 if (pixel_x >= view_port.x1 && pixel_x < view_port.x2 && pixel_y >= view_port.y1 &&
@@ -177,7 +180,7 @@ void render(const NesPPU &ppu, Frame &frame)
     }
 
     std::array<uint8_t, 3> rgb;
-    for (int i = ppu.oam_data.size() - 4; i >= 0; i = i - 4)
+    for (size_t i = ppu.oam_data.size() - 4; i >= 0; i = i - 4)
     {
         uint16_t tile_idx = ppu.oam_data[i + 1];
         size_t tile_x = ppu.oam_data[i + 3];
@@ -226,9 +229,10 @@ void render(const NesPPU &ppu, Frame &frame)
                 default:
                     throw std::runtime_error("cannot be");
                 }
-
-                size_t final_x = tile_x + (flip_horizontal ? 7 - x : x);
-                size_t final_y = tile_y + (flip_vertical ? 7 - y : y);
+				auto x_size = static_cast<size_t>(x);
+				auto y_size = static_cast<size_t>(y);
+                size_t final_x = tile_x + (flip_horizontal ? 7 - x_size : x_size);
+                size_t final_y = tile_y + (flip_vertical ? 7 - y_size : y_size);
                 frame.set_pixel(final_x, final_y, rgb);
             }
         }

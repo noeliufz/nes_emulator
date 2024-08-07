@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.26)
 project(MyNesEmulator)
-# add_compile_options(-Wconversion -Werror)
+add_compile_options(-Wconversion -Werror)
 set(CMAKE_CXX_STANDARD 17)
 
 # 指定编译器路径
@@ -77,22 +77,22 @@ add_executable(emulator
 )
 
 target_link_libraries(emulator ${SDL2_LIBRARIES})
-
-add_executable(tile_test
-    cartridge.h
-    cartridge.cpp
-    tile_test.cpp
-    trace.h
-    trace.cpp
-        cpu.h
-        bus.cpp
-        bus.h
-        cpu.cpp
-        op_code.h
-        op_code.cpp
-    ${SOURCES}
-        cpu_run.cpp
-)
-
-target_link_libraries(tile_test ${SDL2_LIBRARIES})
-
+#
+# add_executable(tile_test
+#     cartridge.h
+#     cartridge.cpp
+#     tile_test.cpp
+#     trace.h
+#     trace.cpp
+#         cpu.h
+#         bus.cpp
+#         bus.h
+#         cpu.cpp
+#         op_code.h
+#         op_code.cpp
+#     ${SOURCES}
+#         cpu_run.cpp
+# )
+#
+# target_link_libraries(tile_test ${SDL2_LIBRARIES})
+#

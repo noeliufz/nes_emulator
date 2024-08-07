@@ -67,7 +67,7 @@ uint16_t CPU::read_u16(uint16_t addr) const
 {
     auto lo = static_cast<uint16_t>(read(addr));
     auto hi = static_cast<uint16_t>(read(addr + 1));
-    uint16_t data = (hi << 8) | lo;
+    auto data = static_cast<uint16_t>((hi << 8) | lo);
     return data;
 }
 
@@ -202,8 +202,8 @@ std::pair<uint16_t, bool> CPU::get_absolute_address(const AddressingMode &mode, 
         auto base = read(addr);
         auto lo = read(static_cast<uint16_t>(base));
         auto hi = read(static_cast<uint16_t>((static_cast<uint8_t>(base + 1))));
-        auto deref_base = (static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)));
-        auto deref = deref_base + (static_cast<uint16_t>(registers.y));
+        auto deref_base = static_cast<uint16_t>(static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)));
+        auto deref = static_cast<uint16_t>(deref_base + (static_cast<uint16_t>(registers.y)));
         return {deref, page_cross(deref, deref_base)};
     }
 
@@ -274,7 +274,7 @@ uint16_t CPU::stack_pop_u16()
 {
     uint16_t lo = stack_pop();
     uint16_t hi = stack_pop();
-    return hi << 8 | lo;
+    return static_cast<uint16_t>(hi << 8 | lo);
 }
 void CPU::stack_push_u16(uint16_t data)
 {

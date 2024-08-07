@@ -14,94 +14,7 @@
 #include <random>
 #include <thread>
 #include <vector>
-SDL_Colour get_color(uint8_t byte)
-{
-    switch (byte)
-    {
-    case 0:
-        return SDL_Color{0, 0, 0, 255}; // black
-    case 1:
-        return SDL_Color{255, 255, 255, 255}; // white
-    case 2:
-    case 9:
-        return SDL_Color{128, 128, 128, 255}; // grey
-    case 3:
-    case 10:
-        return SDL_Color{255, 0, 0, 255}; // red
-    case 4:
-    case 11:
-        return SDL_Color{0, 255, 0, 255}; // green
-    case 5:
-    case 12:
-        return SDL_Color{0, 0, 255, 255}; // blue
-    case 6:
-    case 13:
-        return SDL_Color{255, 0, 255, 255}; // magenta
-    case 7:
-    case 14:
-        return SDL_Color{255, 255, 0, 255}; // yellow
-    default:
-        return SDL_Color{0, 255, 255, 255}; // cyan
-    }
-}
 
-bool read_screen_state(const EM::CPU &cpu, std::vector<uint8_t> &frame)
-{
-    size_t frame_idx = 0;
-    bool update = false;
-    // check if there is pixels to update
-    for (uint16_t i = 0x0200; i < 0x0600; ++i)
-    {
-        uint8_t color_idx = cpu.read(i);
-        SDL_Color color = get_color(color_idx);
-        uint8_t b1 = color.r;
-        uint8_t b2 = color.g;
-        uint8_t b3 = color.b;
-
-        if (frame[frame_idx] != b1 || frame[frame_idx + 1] != b2 || frame[frame_idx + 2] != b3)
-        {
-            frame[frame_idx] = b1;
-            frame[frame_idx + 1] = b2;
-            frame[frame_idx + 2] = b3;
-            update = true;
-        }
-        frame_idx += 3;
-    }
-    return update;
-}
-void handle_user_input(EM::CPU &cpu, SDL_Event &event)
-{
-    switch (event.type)
-    {
-    case SDL_QUIT:
-        std::exit(0);
-        break;
-    case SDL_KEYDOWN:
-        switch (event.key.keysym.sym)
-        {
-        case SDLK_ESCAPE:
-            std::exit(0);
-            break;
-        case SDLK_w:
-            cpu.write(0xff, 0x77);
-            break;
-        case SDLK_s:
-            cpu.write(0xff, 0x73);
-            break;
-        case SDLK_a:
-            cpu.write(0xff, 0x61);
-            break;
-        case SDLK_d:
-            cpu.write(0xff, 0x64);
-            break;
-        default:
-            break;
-        }
-        break;
-    default:
-        break;
-    }
-}
 std::vector<uint8_t> readFile(const std::string &filePath)
 {
     std::ifstream file(filePath, std::ios::binary | std::ios::ate);
@@ -113,7 +26,7 @@ std::vector<uint8_t> readFile(const std::string &filePath)
     std::streamsize size = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    std::vector<uint8_t> buffer(size);
+    std::vector<uint8_t> buffer(static_cast<size_t>(size));
     if (!file.read(reinterpret_cast<char *>(buffer.data()), size))
     {
         throw std::runtime_error("Error reading file");
@@ -190,8 +103,6 @@ int main()
     SDL_Event event;
 
     cpu.run_with_callback([&](EM::CPU &cpu) {
-		std::cout << static_cast<int>(cpu.registers.pc) << std::endl;
-		std::cout <<static_cast<int>(cpu.registers.sp)<<std::endl;
         std::cout << trace(cpu) << std::endl;
     });
 

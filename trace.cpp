@@ -93,8 +93,8 @@ std::string trace(EM::CPU &cpu)
                   to_hex(mem_addr) + " = " + to_hex(stored_value);
             break;
         case AddressingMode::NoneAddressing: {
-            int8_t offset = static_cast<int8_t>(addr);
-            uint16_t jmp_address = begin + 2 + offset;
+            auto offset = static_cast<int8_t>(addr);
+            auto jmp_address = static_cast<uint16_t>(begin + 2 + offset);
             tmp = "$" + to_hex(jmp_address);
             break;
         }
@@ -109,7 +109,7 @@ std::string trace(EM::CPU &cpu)
         hex_dump.emplace_back(address_lo);
         hex_dump.emplace_back(address_hi);
 
-        uint16_t address = (address_hi << 8) | address_lo;
+        auto address = static_cast<uint16_t>((address_hi << 8) | address_lo);
 
         switch (op->mode)
         {
@@ -121,7 +121,7 @@ std::string trace(EM::CPU &cpu)
                 {
                     uint8_t lo = cpu.read(address);
                     uint8_t hi = cpu.read(address & 0xFF00);
-                    jmp_addr = (hi << 8) | lo;
+                    jmp_addr = static_cast<uint16_t>((hi << 8) | lo);
                 }
                 else
                 {
