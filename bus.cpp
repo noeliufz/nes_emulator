@@ -19,7 +19,6 @@ Bus::~Bus() = default;
 // write data to RAM
 void Bus::write(uint16_t addr, uint8_t data)
 {
-//    std::cout << "write " << std::dec << static_cast<int>(data) << " to " << static_cast<int>(addr) << std::endl;
     // ensure the address range not out of bound
     if (addr >= RAM && addr <= RAM_MIRRORS_END)
     {
@@ -89,7 +88,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     else if (addr >= 0x8000 && addr <= 0xFFFF)
     {
 		ostringstream oss;
-		oss << "Trying to access 0x" << std::hex << addr;
+		oss << "Attempt to write to cartridge ROM space 0x" << std::hex << addr;
 		throw std::runtime_error(oss.str());
     }
     else
@@ -171,10 +170,10 @@ void Bus::tick(uint8_t cycle)
 {
     cycles += static_cast<size_t>(cycle);
     auto nmi_before = ppu->nmi_interrupt.has_value();
-    auto f = ppu->tick(cycle * 3);
+    ppu->tick(cycle * 3);
     auto nmi_after = ppu->nmi_interrupt.has_value();
 
-    if (f)
+    if (!nmi_before && nmi_after)
     {
 		gameloop_callback(*ppu, joypad1);
     }

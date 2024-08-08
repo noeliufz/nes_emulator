@@ -123,13 +123,20 @@ int main()
 		  case SDL_KEYDOWN:
 			  if (event.key.keysym.sym == SDLK_ESCAPE)
 			  {
-				  SDL_DestroyTexture(texture);
-				  SDL_DestroyRenderer(renderer);
-				  SDL_DestroyWindow(window);
-				  SDL_Quit();
 				  std::exit(0);
 			  }
-
+			  else if (auto keycode = key_map.find(event.key.keysym.sym); keycode != key_map.end())
+			  {
+				  joypad.set_button_pressed_status(keycode->second, true);
+			  }
+			  break;
+		  case SDL_KEYUP: {
+			  if (auto keycode = key_map.find(event.key.keysym.sym); keycode != key_map.end())
+			  {
+				  joypad.set_button_pressed_status(keycode->second, false);
+			  }
+			  break;
+		  }
 		  default:
 			  break;
 		  }
@@ -141,6 +148,6 @@ int main()
     cpu.reset();
 //    cpu.run();
     cpu.run_with_callback([&](EM::CPU &cpu) {
+//		std::cout << trace(cpu) << std::endl;
 	});
-	std::cout << "done" << std::endl;
 }

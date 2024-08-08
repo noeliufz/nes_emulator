@@ -17,7 +17,7 @@ std::array<uint8_t, 4> bg_palette(const NesPPU &ppu, const uint8_t *attribute_ta
     auto i = tile_column % 4 / 2;
     auto j = tile_row % 4 / 2;
 
-    size_t palette_idx;
+    uint8_t palette_idx;
 
     if (i == 0 && j == 0)
     {

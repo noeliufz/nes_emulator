@@ -121,9 +121,11 @@ uint16_t EM::NesPPU::mirror_vram_addr(uint16_t addr) const
 bool EM::NesPPU::tick(uint8_t cycle)
 {
     cycles += static_cast<size_t>(cycle);
-//	std::cout << cycles << ", " << scanline << std::endl;
     if (cycles >= 341)
     {
+		if (is_sprite_0_hit(cycles)) {
+			status.set_sprite_zero_hit(true);
+		}
         cycles = cycles - 341;
         scanline += 1;
 
@@ -152,10 +154,6 @@ bool NesPPU::is_sprite_0_hit(size_t cycle)
 {
     auto y = static_cast<size_t>(oam_data[0]);
     auto x = static_cast<size_t>(oam_data[3]);
-	if (y == static_cast<size_t>(scanline) && x <= cycle)
-	{
-//		std::cout << "x,y: " << x << " " << y << " " << cycles << std::endl;
-	}
     return (y == static_cast<size_t>(scanline) && x <= cycle && mask.show_sprites());
 }
 

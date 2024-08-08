@@ -28,8 +28,6 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 {
     while (true)
     {
-//        std::cout << trace(*this) << std::endl;
-//		trace(*this);
         if (auto nmi = bus->poll_nmi_status(); nmi.has_value())
         {
             interrupt(NMI);
@@ -64,8 +62,6 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
             std::cerr << e.what() << std::endl;
         }
 
-        //		std::cout << op->mnemonic << std::endl;
-//		std::cout << static_cast<int>(registers.pc) << ", " << op->mnemonic << std::endl;
         switch (code)
         {
         case 0xa9:
@@ -91,6 +87,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
         }
 
         case 0x00: {
+			std::cout << "BRK" << std::endl;
             return;
         }
 

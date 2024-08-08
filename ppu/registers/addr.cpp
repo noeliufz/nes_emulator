@@ -52,7 +52,7 @@ void EM::AddrRegister::increment(uint8_t inc)
     }
     if (get() > 0x3fff)
     {
-        // mirro down addr above 0x3fff
+        // mirror down addr above 0x3fff
         set(get() & 0b11111111111111);
     }
 }
