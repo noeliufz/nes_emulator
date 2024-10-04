@@ -1,4 +1,4 @@
-#include "bus.h"
+#include "../bus/bus.h"
 #include "cpu.h"
 #include <SDL.h>
 #include <cassert>

@@ -12,10 +12,10 @@
 #include <memory>
 #include <optional>
 
-#include "cartridge.h"
+#include "../cartridge/cartridge.h"
 
-#include "joypad.h"
-#include "ppu/ppu.h"
+#include "../joypad/joypad.h"
+#include "../ppu/ppu.h"
 
 namespace EM
 {

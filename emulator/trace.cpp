@@ -1,6 +1,6 @@
 #include "trace.h"
-#include "cpu.h"
-#include "op_code.h"
+#include "../cpu/cpu.h"
+#include "../cpu/op_code.h"
 #include <cassert>
 #include <cstdint>
 #include <iomanip>

@@ -7,9 +7,9 @@
 #include <cstdint>
 #include <iostream>
 
-#include "bus.h"
+#include "../bus/bus.h"
 #include "op_code.h"
-#include "trace.h"
+#include "../emulator/trace.h"
 
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>

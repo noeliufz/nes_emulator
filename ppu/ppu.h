@@ -1,7 +1,7 @@
 #ifndef MYNESEMULATOR__PPU_H_
 #define MYNESEMULATOR__PPU_H_
 
-#include "../cartridge.h"
+#include "../cartridge/cartridge.h"
 #include "registers/addr.h"
 #include "registers/control.h"
 #include "registers/mask.h"

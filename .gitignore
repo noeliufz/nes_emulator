@@ -25,4 +25,4 @@ cmake-build-debug/*
 # Ignore all files in CMakeFiles directory
 CMakeFiles/*
 
-game.nes
+game_roms/game.nes

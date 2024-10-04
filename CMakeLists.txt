@@ -59,20 +59,20 @@ list(REMOVE_ITEM SOURCES ${TESTPPU_FILE})
 #
 #
 add_executable(emulator
-    cartridge.h
-    cartridge.cpp
-    emulator.cpp
-    trace.h
-    trace.cpp
-        cpu.h
-        bus.cpp
-        bus.h
-        cpu.cpp
-        op_code.h
-        op_code.cpp
+        cartridge/cartridge.h
+        cartridge/cartridge.cpp
+        emulator/emulator.cpp
+        emulator/trace.h
+        emulator/trace.cpp
+        cpu/cpu.h
+        bus/bus.cpp
+        bus/bus.h
+        cpu/cpu.cpp
+        cpu/op_code.h
+        cpu/op_code.cpp
     ${SOURCES}
-        cpu_run.cpp
-        joypad.h
+        cpu/cpu_run.cpp
+        joypad/joypad.h
 )
 
 target_link_libraries(emulator ${SDL2_LIBRARIES})

@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "bus.h"
+#include "../bus/bus.h"
 #include "op_code.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>

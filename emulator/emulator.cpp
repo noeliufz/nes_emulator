@@ -1,8 +1,8 @@
-#include "bus.h"
-#include "cpu.h"
-#include "joypad.h"
-#include "render/frame.h"
-#include "render/render.h"
+#include "../bus/bus.h"
+#include "../cpu/cpu.h"
+#include "../joypad/joypad.h"
+#include "../render/frame.h"
+#include "../render/render.h"
 #include "trace.h"
 
 #include <SDL.h>

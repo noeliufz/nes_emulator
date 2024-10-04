@@ -11,7 +11,7 @@
 #include <functional>
 #include <vector>
 
-#include "bus.h"
+#include "../bus/bus.h"
 #include "op_code.h"
 
 namespace EM
