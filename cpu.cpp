@@ -11,10 +11,10 @@
 #include "op_code.h"
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>
+#include <iostream>
 #include <pthread.h>
 #include <stdexcept>
 #include <vector>
-#include <iostream>
 
 namespace EM
 {
@@ -22,11 +22,13 @@ namespace EM
 bool CPU::page_cross(uint16_t addr1, uint16_t addr2)
 {
     if (static_cast<uint16_t>(addr1 & 0xff00) != static_cast<uint16_t>(addr2 & 0xff00))
-	{
-		return true;
-	} else {
-		return false;
-	}
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -114,13 +116,13 @@ void CPU::interrupt(Interrupt i)
     stack_push_u16(registers.pc);
 
     auto flag = registers.p;
-    bool v = (i.b_flag_mask & 0b010000) == 1;
+    bool v = (i.b_flag_mask & 0b010000) != 0;
     if (v)
         flag |= B; // set status to true
     else
         flag &= ~B; // clear status
 
-    v = (i.b_flag_mask & 0b100000) == 1;
+    v = (i.b_flag_mask & 0b100000) != 0;
     if (v)
         flag |= U; // set status to true
     else
@@ -151,8 +153,8 @@ void CPU::set_flag(CpuFlags f, bool v)
 
 void CPU::update_zero_and_negative_flags(const uint8_t result)
 {
-    set_flag(Z, result == 0);        // update zero flag
-    set_flag(N, result & 0x80); 		// update negative flag
+    set_flag(Z, result == 0);      // update zero flag
+    set_flag(N, result >> 7 == 1); // update negative flag
 }
 
 void CPU::update_negative_flags(const uint8_t result)
@@ -198,7 +200,7 @@ std::pair<uint16_t, bool> CPU::get_absolute_address(const AddressingMode &mode, 
 
     case Indirect_X: {
         auto base = read(addr);
-        uint8_t ptr = base + registers.x;
+        uint8_t ptr = static_cast<uint8_t>(base + registers.x);
         auto lo = read(static_cast<uint16_t>(ptr));
         auto hi = read(static_cast<uint16_t>((static_cast<uint8_t>(ptr + 1))));
         return {static_cast<uint16_t>((static_cast<uint16_t>(hi) << 8 | (static_cast<uint16_t>(lo)))), false};
@@ -257,11 +259,11 @@ void CPU::add_to_register_a(uint8_t data)
 void CPU::sub_from_register_a(uint8_t data)
 {
     // not sure
-//	auto negated_data = static_cast<int8_t>(-static_cast<int8_t>(data));
-	// Perform wrapping subtraction
-//	auto result = static_cast<uint8_t>(negated_data - 1);
+    //	auto negated_data = static_cast<int8_t>(-static_cast<int8_t>(data));
+    // Perform wrapping subtraction
+    //	auto result = static_cast<uint8_t>(negated_data - 1);
 
-//	add_to_register_a(result);
+    //	add_to_register_a(result);
     uint8_t negated_data = static_cast<uint8_t>(-static_cast<int8_t>(data) - 1);
     add_to_register_a(negated_data);
 }
@@ -391,10 +393,11 @@ void CPU::SBC(const AddressingMode &mode)
     set_flag(Z, result == 0);
     set_flag(C, result < 0xff);
     set_flag(V, ((registers.a ^ result) & (registers.a ^ data) & 0x80) != 0);
-	registers.a = static_cast<uint8_t>(result & 0xFF);
-	if (page_cross) {
-		bus->tick(1);
-	}
+    registers.a = static_cast<uint8_t>(result & 0xFF);
+    if (page_cross)
+    {
+        bus->tick(1);
+    }
 }
 
 void CPU::ADC(const AddressingMode &mode)
@@ -600,15 +603,15 @@ void CPU::BRANCH(bool condition)
 {
     if (condition)
     {
-		bus->tick(1);
+        bus->tick(1);
 
         auto jump = static_cast<int8_t>(read(registers.pc));
         auto jump_addr = static_cast<uint16_t>(static_cast<uint16_t>(registers.pc + 1) + static_cast<uint16_t>(jump));
 
-		if ((static_cast<uint16_t>(registers.pc + 1) & 0xff00) != (jump_addr & 0xff00))
-		{
-			bus->tick(1);
-		}
+        if ((static_cast<uint16_t>(registers.pc + 1) & 0xff00) != (jump_addr & 0xff00))
+        {
+            bus->tick(1);
+        }
 
         registers.pc = jump_addr;
     }

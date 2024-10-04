@@ -1,4 +1,6 @@
 #include "cartridge.h"
+#include <iostream>
+#include <ostream>
 namespace EM
 {
 Rom::Rom()
@@ -58,6 +60,7 @@ Rom::Rom(const std::vector<uint8_t> &raw)
     chr_rom.assign(raw.begin() + static_cast<std::vector<char>::difference_type>(chr_rom_start),
                    raw.begin() + static_cast<std::vector<char>::difference_type>(chr_rom_start) +
                        static_cast<std::vector<char>::difference_type>(chr_rom_size));
+    std::cout << "PRG size: " << prg_rom_size << std::endl;
 }
 
 } // namespace EM

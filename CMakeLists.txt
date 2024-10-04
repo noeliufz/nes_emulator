@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.26)
 project(MyNesEmulator)
-add_compile_options(-Wconversion -Werror)
+add_compile_options(-Wconversion -Werror -O3)
 set(CMAKE_CXX_STANDARD 17)
 
 # 指定编译器路径
 # set(CMAKE_C_COMPILER /usr/bin/clang)
 # set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 
-set(CMAKE_CXX_COMPILER /usr/bin/g++)
+set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 # 自动启用生成 compile_commands.json 文件
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -38,24 +38,24 @@ list(APPEND SOURCES ${PPU_SOURCES} ${RENDER_SOURCES})
 list(REMOVE_ITEM SOURCES ${TESTPPU_FILE})
 
 #
-add_executable(rom_test
-    cartridge.h
-    cartridge.cpp
-    rom_test.cpp
-    trace.h
-    trace.cpp
-        cpu.h
-        bus.cpp
-        bus.h
-        cpu.cpp
-        op_code.h
-        op_code.cpp
-    ${SOURCES}
-        cpu_run.cpp
-        joypad.h
-)
+# add_executable(rom_test
+#     cartridge.h
+#     cartridge.cpp
+#     rom_test.cpp
+#     trace.h
+#     trace.cpp
+#         cpu.h
+#         bus.cpp
+#         bus.h
+#         cpu.cpp
+#         op_code.h
+#         op_code.cpp
+#     ${SOURCES}
+#         cpu_run.cpp
+#         joypad.h
+# )
 #
-target_link_libraries(rom_test ${SDL2_LIBRARIES})
+# target_link_libraries(rom_test ${SDL2_LIBRARIES})
 #
 #
 add_executable(emulator

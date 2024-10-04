@@ -57,7 +57,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     {
         ppu->write_to_data(data);
     }
-    else if (addr >= 0x4000 && addr <= 0x4013 || addr == 0x4015)
+    else if ((addr >= 0x4000 && addr <= 0x4013) || addr == 0x4015)
     {
         // ignore APU
     }
@@ -87,13 +87,13 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else if (addr >= 0x8000 && addr <= 0xFFFF)
     {
-		ostringstream oss;
-		oss << "Attempt to write to cartridge ROM space 0x" << std::hex << addr;
-		throw std::runtime_error(oss.str());
+        ostringstream oss;
+        oss << "Attempt to write to cartridge ROM space 0x" << std::hex << addr;
+        throw std::runtime_error(oss.str());
     }
     else
     {
-		std::cerr << "Ignoring mem write-access at 0x" << std::hex << addr << std::endl;
+        std::cerr << "Ignoring mem write-access at 0x" << std::hex << addr << std::endl;
     }
 }
 
@@ -108,7 +108,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else if (addr == 0x2000 || addr == 0x2001 || addr == 0x2003 || addr == 0x2005 || addr == 0x2006 || addr == 0x4014)
     {
-//		std::cerr << "Attempt to read from write-only PPU address 0x" << std::hex << addr << std::endl;
+        throw std::runtime_error("Attempt to read from write-only PPU address 0x" + std::to_string(addr));
         return 0;
     }
     else if (addr == 0x2002)
@@ -123,7 +123,7 @@ uint8_t Bus::read(uint16_t addr)
     {
         return ppu->read_data();
     }
-    else if (addr >= 0x4000 && addr <= 4015)
+    else if (addr >= 0x4000 && addr <= 0x4015)
     {
         // ignore APU
         return 0;
@@ -149,7 +149,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else
     {
-//                std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
+        std::cerr << "Ignoring mem access at 0x" << std::hex << addr << std::endl;
         return 0;
     }
 }
@@ -160,27 +160,38 @@ uint8_t Bus::read_prg_rom(uint16_t addr) const
     addr -= 0x8000;
     if (rom->prg_rom.size() == 0x4000 && addr >= 0x4000)
     {
+        // std::cout << "Mirror in PRG" << std::endl;
         // mirror if needed
         addr = addr % 0x4000;
     }
+    // std::cout << "PRG read: 0x" << std::hex << addr << std::endl;
     return rom->prg_rom[addr];
 }
 
 void Bus::tick(uint8_t cycle)
 {
     cycles += static_cast<size_t>(cycle);
+
     auto nmi_before = ppu->nmi_interrupt.has_value();
-    ppu->tick(cycle * 3);
+    auto f = ppu->tick(cycle * 3);
     auto nmi_after = ppu->nmi_interrupt.has_value();
 
     if (!nmi_before && nmi_after)
+    // if (f)
     {
-		gameloop_callback(*ppu, joypad1);
+        gameloop_callback(*ppu, joypad1);
     }
 }
 
 std::optional<uint8_t> Bus::poll_nmi_status() const
 {
+    if (ppu->nmi_interrupt.has_value())
+    {
+        auto result = ppu->nmi_interrupt;
+        ppu->nmi_interrupt.reset();
+        return result;
+    }
+
     return ppu->nmi_interrupt;
 }
 } // namespace EM

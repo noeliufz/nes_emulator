@@ -38,7 +38,7 @@ std::vector<uint8_t> readFile(const std::string &filePath)
 
     return buffer;
 }
-int main()
+int main(int argc, char **argv)
 {
     // init sdl window
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
@@ -91,7 +91,7 @@ int main()
     }
 
     // read Nes file
-    std::vector<uint8_t> bytes = readFile("../game.nes");
+    std::vector<uint8_t> bytes = readFile(argv[1]);
     EM::Rom rom(bytes);
 
     EM::Frame frame;
@@ -114,40 +114,38 @@ int main()
         SDL_RenderCopy(renderer, texture, nullptr, nullptr);
         SDL_RenderPresent(renderer);
 
-		SDL_Event event;
-		while (SDL_PollEvent(&event))
-		{
-		  switch (event.type)
-		  {
-		  case SDL_QUIT:
-		  case SDL_KEYDOWN:
-			  if (event.key.keysym.sym == SDLK_ESCAPE)
-			  {
-				  std::exit(0);
-			  }
-			  else if (auto keycode = key_map.find(event.key.keysym.sym); keycode != key_map.end())
-			  {
-				  joypad.set_button_pressed_status(keycode->second, true);
-			  }
-			  break;
-		  case SDL_KEYUP: {
-			  if (auto keycode = key_map.find(event.key.keysym.sym); keycode != key_map.end())
-			  {
-				  joypad.set_button_pressed_status(keycode->second, false);
-			  }
-			  break;
-		  }
-		  default:
-			  break;
-		  }
-		}
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_ESCAPE)
+                {
+                    std::exit(0);
+                }
+                else if (auto keycode = key_map.find(event.key.keysym.sym); keycode != key_map.end())
+                {
+                    joypad.set_button_pressed_status(keycode->second, true);
+                }
+                break;
+            case SDL_KEYUP: {
+                if (auto keycode = key_map.find(event.key.keysym.sym); keycode != key_map.end())
+                {
+                    joypad.set_button_pressed_status(keycode->second, false);
+                }
+                break;
+            }
+            default:
+                break;
+            }
+        }
     };
 
     auto bus = EM::Bus(&rom, gameloop_callback);
     auto cpu = EM::CPU(&bus);
     cpu.reset();
-//    cpu.run();
-    cpu.run_with_callback([&](EM::CPU &cpu) {
-//		std::cout << trace(cpu) << std::endl;
-	});
+    //    cpu.run();
+    cpu.run_with_callback([&](EM::CPU &cpu) {});
 }
