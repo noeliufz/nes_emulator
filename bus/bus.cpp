@@ -35,7 +35,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     }
     else if (addr == 0x2002)
     {
-        throw std::runtime_error("attemp to write to PPU status register");
+        // throw std::runtime_error("attemp to write to PPU status register");
     }
     else if (addr == 0x2003)
     {
@@ -60,6 +60,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     else if ((addr >= 0x4000 && addr <= 0x4013) || addr == 0x4015)
     {
         // ignore APU
+        std::cout << "APU: write to 0x" << std::hex << static_cast<int>(addr) << std::endl;
     }
     else if (addr == 0x4016)
     {
@@ -89,7 +90,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     {
         ostringstream oss;
         oss << "Attempt to write to cartridge ROM space 0x" << std::hex << addr;
-        throw std::runtime_error(oss.str());
+        // throw std::runtime_error(oss.str());
     }
     else
     {
@@ -108,7 +109,7 @@ uint8_t Bus::read(uint16_t addr)
     }
     else if (addr == 0x2000 || addr == 0x2001 || addr == 0x2003 || addr == 0x2005 || addr == 0x2006 || addr == 0x4014)
     {
-        throw std::runtime_error("Attempt to read from write-only PPU address 0x" + std::to_string(addr));
+        // throw std::runtime_error("Attempt to read from write-only PPU address 0x" + std::to_string(addr));
         return 0;
     }
     else if (addr == 0x2002)
@@ -126,6 +127,7 @@ uint8_t Bus::read(uint16_t addr)
     else if (addr >= 0x4000 && addr <= 0x4015)
     {
         // ignore APU
+        // std::cout << "APU: read 0x" << std::hex << static_cast<int>(addr) << std::endl;
         return 0;
     }
     else if (addr == 0x4016)
