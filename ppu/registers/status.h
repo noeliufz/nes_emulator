@@ -16,7 +16,7 @@ class StatusRegister
         NOTUSED5 = 0b00010000,
         SPRITE_OVERFLOW = 0b00100000,
         SPRITE_ZERO_HIT = 0b01000000,
-        VBLANK_STARTED = 0b10000000,
+        VBLANK_STARTED =  0b10000000,
     };
 
     StatusRegister() : bits(0)

@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <optional>
 #include <ostream>
 #include <vector>
 
@@ -101,7 +102,7 @@ uint8_t EM::NesPPU::read_data()
 }
 uint16_t EM::NesPPU::mirror_vram_addr(uint16_t addr) const
 {
-    uint16_t mirrored_vram = addr & 0b10111111111111;
+    uint16_t mirrored_vram = addr & 0b10111111111111; // mirror down 0x3000-0x3eff to 0x2000 - 0x2eff
     uint16_t vram_index = mirrored_vram - 0x2000;
     uint16_t name_table = vram_index / 0x400;
     if ((mirroring == Mirroring::VERTICAL && (name_table == 2 || name_table == 3)) ||
@@ -121,14 +122,18 @@ uint16_t EM::NesPPU::mirror_vram_addr(uint16_t addr) const
 bool EM::NesPPU::tick(uint8_t cycle)
 {
     cycles += static_cast<size_t>(cycle);
+    // std::cout << "PPU cycles: " << std::dec << static_cast<int>(cycles) << std::endl;
+    // std::cout << "PPU scanlines: " << std::dec << static_cast<int>(scanline) << std::endl;
+
+    // 每一行周期341时
     if (cycles >= 341)
     {
         if (is_sprite_0_hit(cycles))
         {
             status.set_sprite_zero_hit(true);
         }
-        cycles -= 341;
-        scanline += 1;
+        cycles = cycles - 341;
+        scanline++;
 
         if (scanline == 241)
         {
@@ -139,16 +144,22 @@ bool EM::NesPPU::tick(uint8_t cycle)
                 nmi_interrupt = 1;
             }
         }
+
         if (scanline >= 262)
         {
             scanline = 0;
-            nmi_interrupt = std::nullopt;
+            nmi_interrupt.reset();
             status.set_sprite_zero_hit(false);
             status.reset_vblank_status();
             return true;
         }
     }
-    return false;
+
+    // std::cout << "After PPU cycles: " << std::dec << static_cast<int>(cycles) << std::endl;
+    // std::cout << "After PPU scanlines: " << std::dec << static_cast<int>(scanline) << std::endl;
+    // std::cout << std::endl;
+
+    return false; // 如果未结束一帧，返回 false
 }
 
 bool NesPPU::is_sprite_0_hit(size_t cycle)

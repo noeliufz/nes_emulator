@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
-#include <iostream>
 namespace EM
 {
 
@@ -18,7 +17,7 @@ std::array<uint8_t, 4> bg_palette(const NesPPU &ppu, const uint8_t *attribute_ta
     auto i = tile_column % 4 / 2;
     auto j = tile_row % 4 / 2;
 
-    size_t palette_idx;
+    uint8_t palette_idx;
 
     if (i == 0 && j == 0)
     {
@@ -65,11 +64,8 @@ void render_name_table(const NesPPU &ppu, Frame &frame, std::vector<uint8_t> &na
                        std::ptrdiff_t shift_y)
 {
     auto bank = ppu.ctrl.bknd_pattern_addr();
-//    auto start = name_table.begin() + 0x3c0;
-//    auto end = name_table.begin() + 0x400;
-//    auto attribute_table = std::vector<uint8_t>(start, end);
 	auto attribute_table = name_table.data() + 0x3c0;
-    for (auto i = 0; i < 0x3c0; ++i)
+    for (size_t i = 0; i < 0x3c0; ++i)
     {
         auto tile_column = i % 32;
         auto tile_row = i / 32;
@@ -109,8 +105,11 @@ void render_name_table(const NesPPU &ppu, Frame &frame, std::vector<uint8_t> &na
                 default:
                     throw std::runtime_error("cannot be");
                 }
-                auto pixel_x = static_cast<size_t >(tile_column * 8 + x);
-                auto pixel_y = static_cast<size_t >(tile_row * 8 + y);
+
+				auto x_size = static_cast<size_t>(x);
+				auto y_size = static_cast<size_t>(y);
+                auto pixel_x = static_cast<size_t >(tile_column * 8 + x_size);
+                auto pixel_y = static_cast<size_t >(tile_row * 8 + y_size);
 
 
                 if (pixel_x >= view_port.x1 && pixel_x < view_port.x2 && pixel_y >= view_port.y1 &&
@@ -168,18 +167,19 @@ void render(const NesPPU &ppu, Frame &frame)
 
     if (scroll_x > 0)
     {
-        Rect r{0, 0, scroll_x, 240};
-        render_name_table(ppu, frame, second_nametable, r, static_cast<std::ptrdiff_t>(256 - scroll_x), static_cast<std::ptrdiff_t>(0));
+        Rect r1{0, 0, scroll_x, 240};
+        render_name_table(ppu, frame, second_nametable, r1, static_cast<std::ptrdiff_t>(256 - scroll_x), static_cast<std::ptrdiff_t>(0));
     }
     else if (scroll_y > 0)
     {
-        Rect r{0, 0, 256, scroll_y};
-        render_name_table(ppu, frame, second_nametable, r, static_cast<std::ptrdiff_t >(0), static_cast<std::ptrdiff_t>(240 - scroll_y));
+        Rect r2{0, 0, 256, scroll_y};
+        render_name_table(ppu, frame, second_nametable, r2, static_cast<std::ptrdiff_t >(0), static_cast<std::ptrdiff_t>(240 - scroll_y));
     }
 
     std::array<uint8_t, 3> rgb;
-    for (int i = ppu.oam_data.size() - 4; i >= 0; i = i - 4)
+    for (int j = static_cast<int>(ppu.oam_data.size() - 4); j >= 0; j = j - 4)
     {
+		auto i = static_cast<size_t>(j);
         uint16_t tile_idx = ppu.oam_data[i + 1];
         size_t tile_x = ppu.oam_data[i + 3];
         size_t tile_y = ppu.oam_data[i];
@@ -227,9 +227,10 @@ void render(const NesPPU &ppu, Frame &frame)
                 default:
                     throw std::runtime_error("cannot be");
                 }
-
-                int final_x = tile_x + (flip_horizontal ? 7 - x : x);
-                int final_y = tile_y + (flip_vertical ? 7 - y : y);
+				auto x_size = static_cast<size_t>(x);
+				auto y_size = static_cast<size_t>(y);
+                size_t final_x = tile_x + (flip_horizontal ? 7 - x_size : x_size);
+                size_t final_y = tile_y + (flip_vertical ? 7 - y_size : y_size);
                 frame.set_pixel(final_x, final_y, rgb);
             }
         }

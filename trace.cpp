@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iomanip>
 #include <sstream>
+
 namespace EM
 {
 std::string trace(EM::CPU &cpu)
@@ -44,7 +45,7 @@ std::string trace(EM::CPU &cpu)
     default:
         auto [addr, _] = cpu.get_absolute_address(op->mode, begin + 1);
         mem_addr = addr;
-        mem_addr = cpu.read(addr);
+        stored_value = cpu.read(addr);
     }
 
     std::string tmp;
@@ -80,26 +81,26 @@ std::string trace(EM::CPU &cpu)
         case EM::AddressingMode::ZeroPage_X:
             tmp = "$" + to_hex(addr) + ",X @ " + to_hex(mem_addr) + " = " + to_hex(stored_value);
             break;
-        case AddressingMode::ZeroPage_Y:
+        case EM::AddressingMode::ZeroPage_Y:
             tmp = "$" + to_hex(addr) + ",Y @ " + to_hex(mem_addr) + " = " + to_hex(stored_value);
             break;
-        case AddressingMode::Indirect_X:
+        case EM::AddressingMode::Indirect_X:
             tmp = "($" + to_hex(addr) + ",X) @ " + to_hex(static_cast<uint8_t>((addr + cpu.registers.x) & 0xFF)) +
                   " = " + to_hex(mem_addr) + " = " + to_hex(stored_value);
             break;
-        case AddressingMode::Indirect_Y:
+        case EM::AddressingMode::Indirect_Y:
             tmp = "($" + to_hex(addr) +
                   "),Y = " + to_hex(static_cast<uint16_t>((mem_addr - cpu.registers.y) & 0xFFFF)) + " @ " +
                   to_hex(mem_addr) + " = " + to_hex(stored_value);
             break;
-        case AddressingMode::NoneAddressing: {
-            int8_t offset = static_cast<int8_t>(addr);
-            uint16_t jmp_address = begin + 2 + offset;
+        case EM::AddressingMode::NoneAddressing: {
+            auto offset = static_cast<int8_t>(addr);
+            auto jmp_address = static_cast<uint16_t>(begin + 2 + offset);
             tmp = "$" + to_hex(jmp_address);
             break;
         }
         default:
-            assert(false && "Unexpected addressing mode with length 2.");
+            throw std::runtime_error("Unexpected addressing mode with length 2.");
         }
     }
     else if (op->len == 3)
@@ -109,11 +110,11 @@ std::string trace(EM::CPU &cpu)
         hex_dump.emplace_back(address_lo);
         hex_dump.emplace_back(address_hi);
 
-        uint16_t address = (address_hi << 8) | address_lo;
+        auto address = static_cast<uint16_t>((address_hi << 8) | address_lo);
 
         switch (op->mode)
         {
-        case AddressingMode::NoneAddressing:
+        case EM::AddressingMode::NoneAddressing:
             if (op->code == 0x6c)
             { // JMP indirect
                 uint16_t jmp_addr;
@@ -121,7 +122,7 @@ std::string trace(EM::CPU &cpu)
                 {
                     uint8_t lo = cpu.read(address);
                     uint8_t hi = cpu.read(address & 0xFF00);
-                    jmp_addr = (hi << 8) | lo;
+                    jmp_addr = static_cast<uint16_t>((hi << 8) | lo);
                 }
                 else
                 {
@@ -134,42 +135,44 @@ std::string trace(EM::CPU &cpu)
                 tmp = "$" + to_hex(address);
             }
             break;
-        case AddressingMode::Absolute:
+        case EM::AddressingMode::Absolute:
             tmp = "$" + to_hex(mem_addr) + " = " + to_hex(stored_value);
             break;
-        case AddressingMode::Absolute_X:
+        case EM::AddressingMode::Absolute_X:
             tmp = "$" + to_hex(address) + ",X @ " + to_hex(mem_addr) + " = " + to_hex(stored_value);
             break;
-        case AddressingMode::Absolute_Y:
+        case EM::AddressingMode::Absolute_Y:
             tmp = "$" + to_hex(address) + ",Y @ " + to_hex(mem_addr) + " = " + to_hex(stored_value);
             break;
         default:
-            assert(false && "Unexpected addressing mode with length 3.");
+            throw std::runtime_error("Unexpected addressing mode with length 3.");
         }
     }
 
     std::stringstream hex_stream;
-    for (auto byte : hex_dump)
+    for (size_t i = 0; i < hex_dump.size(); ++i)
     {
-        hex_stream << std::hex << std::setw(2) << std::setfill(' ') << static_cast<int>(byte) << " ";
+        if (i > 0)
+            hex_stream << " ";
+        hex_stream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hex_dump[i]);
     }
+
     std::string hex_str = hex_stream.str();
-    hex_str.pop_back(); // Remove the trailing space
 
     std::stringstream asm_stream;
-    asm_stream << std::hex << std::setw(4) << std::setfill(' ') << begin << "  " << std::left << std::setw(8) << hex_str
+    asm_stream << std::hex << std::setw(4) << std::setfill('0') << begin << "  " << std::left << std::setw(8) << hex_str
                << std::right << std::setw(4) << op->mnemonic << " " << tmp;
+
     std::string asm_str = asm_stream.str();
-    asm_str = asm_str.substr(0, asm_str.find_last_not_of(" \n\r\t") + 1);
 
     std::stringstream final_stream;
-
-    final_stream << std::uppercase << asm_str << "\tA:" << std::hex << std::setw(2) << std::setfill(' ')
-                 << static_cast<int>(cpu.registers.a) << " X:" << std::hex << std::setw(2) << std::setfill(' ')
-                 << static_cast<int>(cpu.registers.x) << " Y:" << std::hex << std::setw(2) << std::setfill(' ')
-                 << static_cast<int>(cpu.registers.y) << " P:" << std::hex << std::setw(2) << std::setfill(' ')
-                 << static_cast<int>(cpu.registers.p) << " SP:" << std::hex << std::setw(2) << std::setfill(' ')
-                 << static_cast<int>(cpu.registers.sp);
+    final_stream << std::uppercase << asm_str << "  A:" << std::hex << std::setw(2) << std::setfill('0')
+                 << static_cast<int>(cpu.registers.a) << " X:" << std::hex << std::setw(2) << std::setfill('0')
+                 << static_cast<int>(cpu.registers.x) << " Y:" << std::hex << std::setw(2) << std::setfill('0')
+                 << static_cast<int>(cpu.registers.y) << " P:" << std::hex << std::setw(2) << std::setfill('0')
+                 << static_cast<int>(cpu.registers.p) << " SP:" << std::hex << std::setw(2) << std::setfill('0')
+                 << static_cast<int>(cpu.registers.sp) << " PPU:" << static_cast<int>(cpu.bus->ppu->cycles) << ","
+                 << static_cast<int>(cpu.bus->ppu->scanline) << " CYC:" << static_cast<int>(cpu.bus->cycles);
 
     return final_stream.str();
 }
