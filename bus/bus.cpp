@@ -8,7 +8,6 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <stdexcept>
 
 namespace EM
 {
@@ -60,7 +59,7 @@ void Bus::write(uint16_t addr, uint8_t data)
     else if ((addr >= 0x4000 && addr <= 0x4013) || addr == 0x4015)
     {
         // ignore APU
-        std::cout << "APU: write to 0x" << std::hex << static_cast<int>(addr) << std::endl;
+        // std::cout << "APU: write to 0x" << std::hex << static_cast<int>(addr) << std::endl;
     }
     else if (addr == 0x4016)
     {
@@ -127,7 +126,6 @@ uint8_t Bus::read(uint16_t addr)
     else if (addr >= 0x4000 && addr <= 0x4015)
     {
         // ignore APU
-        // std::cout << "APU: read 0x" << std::hex << static_cast<int>(addr) << std::endl;
         return 0;
     }
     else if (addr == 0x4016)
@@ -162,11 +160,8 @@ uint8_t Bus::read_prg_rom(uint16_t addr) const
     addr -= 0x8000;
     if (rom->prg_rom.size() == 0x4000 && addr >= 0x4000)
     {
-        // std::cout << "Mirror in PRG" << std::endl;
-        // mirror if needed
         addr = addr % 0x4000;
     }
-    // std::cout << "PRG read: 0x" << std::hex << addr << std::endl;
     return rom->prg_rom[addr];
 }
 
@@ -175,11 +170,10 @@ void Bus::tick(uint8_t cycle)
     cycles += static_cast<size_t>(cycle);
 
     auto nmi_before = ppu->nmi_interrupt.has_value();
-    auto f = ppu->tick(cycle * 3);
+    ppu->tick(cycle * 3);
     auto nmi_after = ppu->nmi_interrupt.has_value();
 
     if (!nmi_before && nmi_after)
-    // if (f)
     {
         gameloop_callback(*ppu, joypad1);
     }
@@ -187,13 +181,6 @@ void Bus::tick(uint8_t cycle)
 
 std::optional<uint8_t> Bus::poll_nmi_status() const
 {
-    if (ppu->nmi_interrupt.has_value())
-    {
-        auto result = ppu->nmi_interrupt;
-        ppu->nmi_interrupt.reset();
-        return result;
-    }
-
     return ppu->nmi_interrupt;
 }
 } // namespace EM

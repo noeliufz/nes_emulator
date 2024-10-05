@@ -8,15 +8,14 @@
 #include <iostream>
 
 #include "../bus/bus.h"
-#include "op_code.h"
 #include "../emulator/trace.h"
+#include "op_code.h"
 
 #include <_types/_uint16_t.h>
 #include <_types/_uint8_t.h>
 #include <pthread.h>
 #include <sstream>
 #include <stdexcept>
-#include <thread>
 
 namespace EM
 {
@@ -34,6 +33,7 @@ void CPU::run_with_callback(std::function<void(CPU &)> callback)
 {
     while (true)
     {
+        // if there is value, it will return the value and then reset
         auto nmi = bus->poll_nmi_status();
 
         if (nmi.has_value())
